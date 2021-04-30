@@ -23,7 +23,7 @@ const navStyle = css`
 `;
 
 const Nav = () => {
-  const [,setUrl] = useNavigate();
+  const [,setUrl] = useNavigate('nav');
 
   const navigateTo = (e, url) => {
     // 阻止a tag的默认行为，就是不让跳转
@@ -40,7 +40,7 @@ const Nav = () => {
 }
 
 function App() {
-  const [view,] = useNavigate();
+  const [view,] = useNavigate('app');
 
   return (
     <div>
