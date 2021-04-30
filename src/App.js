@@ -25,10 +25,16 @@ const navStyle = css`
 const Nav = () => {
   const [,setUrl] = useNavigate();
 
+  const navigateTo = (e, url) => {
+    // 阻止a tag的默认行为，就是不让跳转
+    e.preventDefault();
+    setUrl(url);
+  }
+
   return (
     <div className={navStyle}>
-      <a href="/dashbroad" onClick={() => setUrl('/dashbroad')}>总览</a>
-      <a href="/month" onClick={() => setUrl('/month')}>月度视图</a>
+      <a href="/dashbroad" onClick={e => navigateTo(e, '/dashbroad')}>总览</a>
+      <a href="/month" onClick={e => navigateTo(e, '/month')}>月度视图</a>
     </div>
   )
 }
