@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useNavigate } from './router.js';
+import Toolbar from './components/Toolbar.js';
 
 const navStyle = css`
   display: flex;
@@ -46,6 +47,7 @@ function App() {
     <div>
       <Nav />
       {view}
+      <Toolbar />
     </div>
   );
 }
