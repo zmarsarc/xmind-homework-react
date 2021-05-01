@@ -22,14 +22,14 @@ const toolbarStyle = css`
     }
 
     .icon {
-        color: #27ae60;
+        color: #7f8c8d;
         font-size: 2.5rem;
 
         :hover {
-            color: #16a085;
+            color: #95a5a6;
         }
         :active {
-            color: #e67e22;
+            color: #7f8c8d;
         }
     }
 

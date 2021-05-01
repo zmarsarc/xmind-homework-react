@@ -1,6 +1,26 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import datetime from '../utils/datetime.js';
+
+const popupBlock = css`
+    background-color: #ecf0f1;
+    position: absolute;
+    display: block;
+    width: 100%;
+    border-top: 1px solid #95a5a6;
+    z-index: 100;
+`;
+
+const buttonLike = css`
+    user-select: none;
+    cursor: pointer;  
+    :hover {
+        background-color: #bdc3c7;
+    }
+    :active {
+        background-color: #ecf0f1;
+    }
+`;
 
 const datetimePickerStyle = css`
     position: relative;
@@ -24,11 +44,7 @@ const datetimePickerStyle = css`
         display: none;
     }
     .picker.active {
-        background-color: #ecf0f1;
-        position: absolute;
-        display: block;
-        width: 100%;
-        border-top: 1px solid #95a5a6;
+        ${popupBlock}
         font-size: 20px;
         font-weight: 400;
         .month {
@@ -115,7 +131,100 @@ const DatetimePicker = props => {
             </div>
         </div>
     )
-}
+};
+
+const categoryPickerStyle = css`
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    font-size: 20px;
+    font-weight: 500;
+    
+    .selected-category {
+        user-select: none;
+        cursor: pointer;  
+        :hover {
+            background-color: #bdc3c7;
+        }
+        :active {
+            background-color: #ecf0f1;
+        }
+    }
+
+    .selected-category {
+        font-size: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 5px;
+    }
+
+    .picker {
+        display: none;
+    }
+    .picker.active {
+        ${popupBlock}
+
+        .types {
+            display: flex;
+            div {
+                padding: 10px;
+                ${buttonLike};
+            }
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+
+            div {
+                padding: 5px;
+                ${buttonLike};
+            }
+        }
+    }
+`;
+
+const CategoryPicker = props => {
+    const [category, setCategory] = useState(null);
+    const [type, setType] = useState(0);
+    const [categories, setCategories] = useState([]);
+    const [pickerOpen, setPickerOpen] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/category/')
+        .then(resp => {
+            if (!resp.ok) {
+                throw new Error(resp.statusText);
+            }
+            return resp.json();
+        })
+        .then(json => {
+            if (json.code !== 0) {
+                throw new Error(json.msg);
+            }
+            setCategories(json.data);
+        })
+        .catch(err => console.error(err));
+    }, [type])
+
+    return (
+        <div className={categoryPickerStyle}>
+            <div className='selected-category' onClick={() => setPickerOpen(!pickerOpen)}>{category === null ? '选择类型' : category.name}</div>
+            <div className={pickerOpen? 'picker active': 'picker'}>
+                <div className='types'>
+                    <div onClick={() => setType(0)}>支出</div>
+                    <div onClick={() => setType(1)}>收入</div>
+                </div>
+                <div className='categories'>
+                    {categories.filter(elem => elem.type === type).map(val => {
+                        return (<div key={val.id} onClick={() => setCategory(val)}>{val.name}</div>)
+                    })}
+                </div>
+            </div>
+        </div>
+    )
+};
 
 const addItemStyle = css`
     display: flex;
@@ -161,6 +270,7 @@ const AddItem = props => {
         <div className={addItemStyle}>
             <div className="content">
                 <DatetimePicker />
+                <CategoryPicker />
                 <button className="cancel" onClick={props.onClose}>Cancel</button>
             </div>
         </div>
