@@ -131,7 +131,7 @@ module.exports = {
                 }
             }
 
-            ctx.body = resp.json({output: output, input: input});
+            ctx.body = resp.json({outgoing: output, income: input});
         }
     }
 }
