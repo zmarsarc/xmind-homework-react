@@ -26,19 +26,15 @@ const datetimePickerStyle = css`
     position: relative;
 
     .selected-datetime, .next, .prev, .day, .up, .down {
-        user-select: none;
-        cursor: pointer;  
-        :hover {
-            background-color: #bdc3c7;
-        }
-        :active {
-            background-color: #ecf0f1;
-        }
+        ${buttonLike}
     }
     .selected-datetime {
         font-size: 24px;
         font-weight: 500;
-        padding: 10px 25px;      
+        padding: 10px 25px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     .picker {
         display: none;
@@ -86,10 +82,127 @@ const datetimePickerStyle = css`
     }
 `;
 
+const categoryPickerStyle = css`
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    font-size: 20px;
+    font-weight: 500;
+    
+    .selected-category {
+        user-select: none;
+        cursor: pointer;  
+        :hover {
+            background-color: #bdc3c7;
+        }
+        :active {
+            background-color: #ecf0f1;
+        }
+    }
+
+    .selected-category {
+        font-size: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 5px;
+    }
+
+    .picker {
+        display: none;
+    }
+    .picker.active {
+        ${popupBlock}
+
+        .types {
+            display: flex;
+            div {
+                padding: 10px;
+                ${buttonLike}
+            }
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+
+            div {
+                padding: 5px;
+                ${buttonLike}
+            }
+        }
+    }
+`;
+
+const addItemStyle = css`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+
+    .content {
+        max-width: 300px;
+        padding: 10px;
+        border-radius: 2px;
+        z-index: 1;
+        background-color: #ecf0f1;
+        & > * {
+            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+            margin: 5px 0px;
+        }
+        button {
+            border: none;
+            outline: none;
+            font-size: 24px;
+            width: 100%;
+            padding: 5px 10px;
+        }
+        input {
+            border: none;
+            outline: none;
+            font-size: 24px;
+            width: 100%;
+            text-align: center;
+            ::-webkit-inner-spin-button {
+                appearance: none;
+                margin: 0;
+            }
+        }
+        .cancel {
+            background-color: #e74c3c;
+            :hover {
+                background-color: #c0392b;
+            }
+            :active {
+                background-color: #e74c3c;
+            } 
+        }
+        .confirm {
+            background-color: #2ecc71;
+            :hover {
+                background-color: #27ae60;
+            }
+            :active {
+                background-color: #2ecc71;
+            } 
+        }
+    }
+`;
+
 const DatetimePicker = props => {
 
     const [current, setCurrent] = useState(Date.now());
     const [pickerOpen, setPickerOpen] = useState(false);
+
+    useEffect(() => {
+        props.onChange(current);
+    }, [props, current])
 
     const time = new Date(current);
 
@@ -133,58 +246,6 @@ const DatetimePicker = props => {
     )
 };
 
-const categoryPickerStyle = css`
-    display: inline-block;
-    position: relative;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 500;
-    
-    .selected-category {
-        user-select: none;
-        cursor: pointer;  
-        :hover {
-            background-color: #bdc3c7;
-        }
-        :active {
-            background-color: #ecf0f1;
-        }
-    }
-
-    .selected-category {
-        font-size: 24px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 5px;
-    }
-
-    .picker {
-        display: none;
-    }
-    .picker.active {
-        ${popupBlock}
-
-        .types {
-            display: flex;
-            div {
-                padding: 10px;
-                ${buttonLike};
-            }
-        }
-
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-
-            div {
-                padding: 5px;
-                ${buttonLike};
-            }
-        }
-    }
-`;
-
 const CategoryPicker = props => {
     const [category, setCategory] = useState(null);
     const [type, setType] = useState(0);
@@ -206,7 +267,11 @@ const CategoryPicker = props => {
             setCategories(json.data);
         })
         .catch(err => console.error(err));
-    }, [type])
+    }, [type]);
+
+    useEffect(() => {
+        props.onChange(category);
+    }, [props, category]);
 
     return (
         <div className={categoryPickerStyle}>
@@ -226,52 +291,54 @@ const CategoryPicker = props => {
     )
 };
 
-const addItemStyle = css`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-
-    .content {
-        padding: 10px;
-        border-radius: 2px;
-        z-index: 1;
-        background-color: #ecf0f1;
-        & > * {
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
-            margin: 5px 0px;
-        }
-        button {
-            border: none;
-            outline: none;
-            font-size: 24px;
-            width: 100%;
-            padding: 5px 10px;
-        }
-        .cancel {
-            background-color: #e74c3c;
-            :hover {
-                background-color: #c0392b;
-            }
-            :active {
-                background-color: #e74c3c;
-            } 
-        }
-    }
-`;
-
 const AddItem = props => {
+    const [datetime, setDatetime] = useState(0);
+    const [category, setCategory] = useState(null);
+    const [amount, setAmount] = useState(0);
+    const [ok, setOk] = useState(false);
+
+    useEffect(() => {
+        if (!ok) {
+            return;
+        }
+
+        const item = {
+            time: datetime,
+            input: category.type,
+            type: category.id,
+            amount: amount
+        }
+        fetch('/api/ledger/item', {
+            method: 'POST',
+            body: JSON.stringify(item),
+            headers: {
+                'Content-type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(resp => {
+            if (!resp.ok) {
+                throw new Error(resp.statusText);
+            }
+            return resp.json();
+        })
+        .then(json => {
+            if (json.code !== 0) {
+                throw new Error(json.msg);
+            }
+        })
+        .catch(err => console.error(err));
+        props.onClose();
+    }, [datetime, category, amount, ok, props])
+
     return (
         <div className={addItemStyle}>
             <div className="content">
-                <DatetimePicker />
-                <CategoryPicker />
-                <button className="cancel" onClick={props.onClose}>Cancel</button>
+                <DatetimePicker onChange={setDatetime} />
+                <CategoryPicker onChange={setCategory} />
+                <input type="number" placeholder='金额' onChange={e => setAmount(Number(e.target.value))}/>
+                <button className="cancel" onClick={props.onClose}>cancel</button>
+                <button className="confirm" onClick={() => setOk(true)}>ok</button>
             </div>
         </div>
     )
