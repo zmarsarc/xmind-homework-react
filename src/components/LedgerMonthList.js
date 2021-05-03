@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { css } from '@emotion/css';
+import ledger from '../api/ledger.js';
 
 const LedgerItem = ({ value, categories }) => {
 
@@ -104,56 +105,18 @@ const LedgerMonthList = (props) => {
     const [categories, setCategories] = useState([]);
     const [overview, setOverview] = useState([]);
 
+    const handleError = err => {
+        alert(err);
+    }
+
     useEffect(() => {
-        fetch('/api/ledger/item/month/' + props.month)
-        .then(resp => {
-            if (resp.ok) {
-                return resp.json();
-            }
-            throw new Error(resp.statusText);
-        })
-        .then(json => {
-            if (json.code !== 0) {
-                throw new Error(json.msg);
-            }
-            setItems(json.data);
-        })
-        .catch(err => console.error(err));
+        Promise.all([
+            ledger.getItemsInMonth(props.month).then(setItems),
+            ledger.getCategories().then(setCategories),
+            ledger.getOverviewInMonth(props.month).then(setOverview),
+        ])
+        .catch(handleError)
     }, [props.month]);
-
-    useEffect(() => {
-        fetch('/api/category')
-        .then(resp => {
-            if (resp.ok) {
-                return resp.json();
-            }
-            throw new Error(resp.statusText);
-        })
-        .then(json => {
-            if (json.code !== 0) {
-                throw new Error(json.msg);
-            }
-            setCategories(json.data);
-        })
-        .catch(err => console.error(err));
-    }, [])
-
-    useEffect(() => {
-        fetch('/api/overview/month/' + props.month)
-        .then(resp => {
-            if (resp.ok) {
-                return resp.json();
-            }
-            throw new Error(resp.statusText);
-        })
-        .then(json => {
-            if (json.code !== 0) {
-                throw new Error(json.msg);
-            }
-            setOverview(json.data);
-        })
-        .catch(err => console.error(err));
-    }, [props.month])
 
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 
