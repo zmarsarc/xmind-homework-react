@@ -18,10 +18,11 @@ const route = () => {
             // 直接访问month跳转到当月的账单
             const now = new Date();
             const thisMonth = now.getMonth() + 1;
-            window.history.replaceState(null, null, '/ledger/month/' + thisMonth);
+            const thisYear = now.getFullYear();
+            window.history.replaceState(null, null, `/ledger/month/${thisYear}/${thisMonth}`);
             return <LedgerMonthList month={thisMonth} />;
         }},
-        {path: "/ledger/month/:month", view: ({month}) => <LedgerMonthList month={month} />}
+        {path: "/ledger/month/:year/:month", view: ({year, month}) => <LedgerMonthList year={year} month={month} />}
     ]
 
     const potentialMatch = routes.map(r => {

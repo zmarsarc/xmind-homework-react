@@ -40,12 +40,15 @@ module.exports = {
 
     getItemsInMonth: (readItem) => {
 
-        // router: /api/ledger/item/month/:month
-        // response: json {"code": 0, "msg": "ok", "data": [{"id": 1, "userId": 1, "eventTime": , "writeTime": , "type": , "category": , "amount": }]}
+        // router: /api/ledger/item/:year/:month
+        // response: json {"code": 0, "msg": "ok", "data": {
+        //    total: 1, items:[{"id": 1, "userId": 1, "eventTime": , "writeTime": , "type": , "category": , "amount": }]
+        //    }}
         return async(ctx, next) => {
+            const year = Number(ctx.params.year);
             const month = Number(ctx.params.month);
-            if (!month) {
-                ctx.logger.error('invalid url path, can not get month');
+            if (!month || !year) {
+                ctx.logger.error('invalid url path, can not get year-month');
                 ctx.body = resp.invalidParams;
                 return;
             }
@@ -57,7 +60,7 @@ module.exports = {
                 return;
             }
             ctx.logger.debug(`read ledger items of ${ctx.user.name} in month ${month}`);
-            ctx.body = resp.json(await readItem({userId: ctx.user.id, month: month, offset: ctx.query.offset, limit: ctx.query.limit}));
+            ctx.body = resp.json(await readItem({userId: ctx.user.id, year: year, month: month, offset: ctx.query.offset, limit: ctx.query.limit}));
         }
     },
 
@@ -117,11 +120,10 @@ module.exports = {
         return async(ctx, next) => {
             let items = []
             if (ctx.params) {
-                items = (await readLedger({userId: ctx.user.id, month: ctx.params.month})).items;
+                items = (await readLedger({userId: ctx.user.id, year: ctx.params.year, month: ctx.params.month})).items;
             } else {
                 items = (await readLedger({userId: ctx.user.id})).items;
             }
-            ctx.logger.debug(items);
             let output = 0;
             let input = 0;
             for (let i of items) {

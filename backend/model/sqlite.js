@@ -98,21 +98,35 @@ module.exports = class {
 
     // field names: id, userId, eventTime, writeTime, type, category, amount
     async getItem(filter) {
+        let query = JSON.parse(JSON.stringify(filter));
         return new Promise((resolve, reject) => {
             const sql = `select id, user_id as userId, event_time as eventTime, write_time as writeTime, type, category, amount
             from ledger`
-            if (filter.id) {
+            if (query.id) {
                 const querySql = sql + ' where id = ?';
-                resolve(this.db.prepare(querySql).get(filter.id));
+                resolve(this.db.prepare(querySql).get(query.id));
             }
-            if (filter.userId) {
+            if (query.userId) {
+                let queryTotalSql = 'select count(*) as cnt from ledger where user_id = @userId';
                 let querySql = sql + ' where user_id = @userId';
-                if (filter.offset && filter.limit) {
+
+                if (query.year && query.month) {
+                    const time = new Date(0);
+                    query.startTime = time.setFullYear(query.year, query.month - 1, 1);
+                    query.endTime = time.setMonth(query.month, 0);
+
+                    const cond = ' and event_time between @startTime and @endTime'
+                    querySql += cond;
+                    queryTotalSql += cond; 
+                }
+
+                if (query.offset && query.limit) {
                     querySql += ' limit @limit offset @offset'
                 }
+
                 const result = {
-                    total: this.db.prepare('select count(*) as cnt from ledger where user_id = @userId').get(filter).cnt,
-                    items: this.db.prepare(querySql).all(filter)
+                    total: this.db.prepare(queryTotalSql).get(query).cnt,
+                    items: this.db.prepare(querySql).all(query)
                 };
                 resolve(result);
             }

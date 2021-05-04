@@ -194,15 +194,15 @@ const LedgerMonthList = (props) => {
 
     useEffect(() => {
         Promise.all([
-            ledger.getItemsInMonth(props.month, page.offset, page.limit).then(data => {
+            ledger.getItemsInMonth(props.year, props.month, page.offset, page.limit).then(data => {
                 setTotal(data.total);
                 setItems(data.items);
             }),
             ledger.getCategories().then(setCategories),
-            ledger.getOverviewInMonth(props.month).then(setOverview),
+            ledger.getOverviewInMonth(props.year, props.month).then(setOverview),
         ])
         .catch(handleError)
-    }, [props.month, page]);
+    }, [props.year, props.month, page]);
 
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 

@@ -37,10 +37,10 @@ apiRouter.use(async(ctx, next) => {
 
 apiRouter.prefix('/api');
 apiRouter.post('/ledger/item', ledger.addItem((userid, item) => backend.saveItem(userid, item)));
-apiRouter.get('/ledger/item/month/:month', ledger.getItemsInMonth(filter => backend.getItem(filter)))
+apiRouter.get('/ledger/item/:year/:month', ledger.getItemsInMonth(filter => backend.getItem(filter)))
 apiRouter.post('/category', ledger.addCatagory((userid, category) => { return backend.saveCategory(userid, category)}));
 apiRouter.get('/category', ledger.getCategory((userid) => { return backend.getCategory({userId: userid})}));
 apiRouter.get('/category/type/:typeid', ledger.getCategoryByType((userid, typeid) => { return backend.getCategory({userId: userid, type: typeid})}));
 apiRouter.get('/overview', ledger.getOverview(filter => backend.getItem(filter)));
-apiRouter.get('/overview/month/:month', ledger.getOverview(filter => backend.getItem(filter)));
+apiRouter.get('/overview/:year/:month', ledger.getOverview(filter => backend.getItem(filter)));
 module.exports = apiRouter;
