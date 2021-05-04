@@ -144,8 +144,14 @@ const PageSelector = ({onChange, size, total}) => {
         }
 
         // 确定滑窗位置
-        const head = Math.min(Math.max(1, current - 2), cnt - 4);
-        const tail = Math.max(Math.min(cnt, current + 2), 5);
+        let head = Math.min(Math.max(1, current - Math.floor(size / 2)), cnt - size + 1);
+        let tail = Math.max(Math.min(cnt, current + Math.ceil(size / 2)), size);
+        
+        // 如果页码不足以填满一个窗口，只显示能填满的部分
+        if (cnt < size) {
+            head = 1;
+            tail = cnt;
+        }
 
         // 渲染页码
         // 开头的是向前翻页按钮
@@ -153,13 +159,13 @@ const PageSelector = ({onChange, size, total}) => {
         index.push(<div key={'prev'} onClick={() => setCurrent(current === 1 ? current : current - 1)}>{'<'}</div>)
 
         if (head > 1) {
-            index.push(<div key={'prev-hidden'} onClick={() => setCurrent(Math.max(1, current - 5))}>{'\u22ef'}</div>)
+            index.push(<div key={'prev-hidden'} onClick={() => setCurrent(Math.max(1, current - size))}>{'\u22ef'}</div>)
         }
         for (let i = head; i <= tail; i++) {
             index.push(<div className={i === current ? 'current' : ''} onClick={() => setCurrent(i)} key={i}>{i}</div>);
         }
         if (tail < cnt) {
-            index.push(<div key={'next-hidden'} onClick={() => setCurrent(Math.min(cnt, current + 5))}>{'\u22ef'}</div>)
+            index.push(<div key={'next-hidden'} onClick={() => setCurrent(Math.min(cnt, current + size))}>{'\u22ef'}</div>)
         }
 
         // 向后翻页按钮
@@ -179,6 +185,8 @@ const LedgerMonthList = (props) => {
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [overview, setOverview] = useState([]);
+    const [page, setPage] = useState({offset: 0, limit: 5});
+    const [total, setTotal] = useState(0);
 
     const handleError = err => {
         alert(err);
@@ -186,12 +194,15 @@ const LedgerMonthList = (props) => {
 
     useEffect(() => {
         Promise.all([
-            ledger.getItemsInMonth(props.month).then(setItems),
+            ledger.getItemsInMonth(props.month, page.offset, page.limit).then(data => {
+                setTotal(data.total);
+                setItems(data.items);
+            }),
             ledger.getCategories().then(setCategories),
             ledger.getOverviewInMonth(props.month).then(setOverview),
         ])
         .catch(handleError)
-    }, [props.month]);
+    }, [props.month, page]);
 
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 
@@ -211,7 +222,7 @@ const LedgerMonthList = (props) => {
                         })}
                     </tbody>
                 </table>
-                <PageSelector onChange={p => console.log(p)} size={5} total={101}/>
+                <PageSelector onChange={setPage} size={5} total={total}/>
             </main>
         </div>
     )

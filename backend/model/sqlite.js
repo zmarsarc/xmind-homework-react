@@ -106,9 +106,15 @@ module.exports = class {
                 resolve(this.db.prepare(querySql).get(filter.id));
             }
             if (filter.userId) {
-                const querySql = sql + ' where user_id = ?';
-                resolve(this.db.prepare(querySql).all(filter.userId));
-                // @todo: filter by month
+                let querySql = sql + ' where user_id = @userId';
+                if (filter.offset && filter.limit) {
+                    querySql += ' limit @limit offset @offset'
+                }
+                const result = {
+                    total: this.db.prepare('select count(*) as cnt from ledger where user_id = @userId').get(filter).cnt,
+                    items: this.db.prepare(querySql).all(filter)
+                };
+                resolve(result);
             }
             reject(new Error("no user id or ledger item id specified."))
         })

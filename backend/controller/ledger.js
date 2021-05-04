@@ -49,10 +49,15 @@ module.exports = {
                 ctx.body = resp.invalidParams;
                 return;
             }
-
+            ctx.checkQuery('offset').notEmpty().isInt();
+            ctx.checkQuery('limit').notEmpty().isInt();
+            if (ctx.errors) {
+                ctx.logger.error(`invalid params when get ledger items of user ${ctx.user.name}`);
+                ctx.body = resp.invalidParams;
+                return;
+            }
             ctx.logger.debug(`read ledger items of ${ctx.user.name} in month ${month}`);
-            const items = await readItem(ctx.user.id, month);
-            ctx.body = resp.json(items);
+            ctx.body = resp.json(await readItem({userId: ctx.user.id, month: month, offset: ctx.query.offset, limit: ctx.query.limit}));
         }
     },
 
@@ -112,11 +117,11 @@ module.exports = {
         return async(ctx, next) => {
             let items = []
             if (ctx.params) {
-                items = await readLedger({userId: ctx.user.id, month: ctx.params.month});
+                items = (await readLedger({userId: ctx.user.id, month: ctx.params.month})).items;
             } else {
-                items = await readLedger({userId: ctx.user.id});
+                items = (await readLedger({userId: ctx.user.id})).items;
             }
-
+            ctx.logger.debug(items);
             let output = 0;
             let input = 0;
             for (let i of items) {

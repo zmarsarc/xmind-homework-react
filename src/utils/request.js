@@ -11,7 +11,11 @@ const handleResponse = async (resp) => {
     return json.data;
 }
 
-const get = async (url) => {
+const get = async (path, params) => {
+    let url = path;
+    if (params) {
+        url += '?' + new URLSearchParams(params);
+    }
     const resp = await fetch(url);
     return handleResponse(resp);
 }
