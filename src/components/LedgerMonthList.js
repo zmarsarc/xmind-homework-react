@@ -128,6 +128,13 @@ const pageSelectorStyle = css`
     }
 `;
 
+const MonthNameLabel = ({month}) => {
+    const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+    return (<>
+        <span>{monthName[month]}月账单</span>
+    </>)
+};
+
 const PageSelector = ({onChange, size, total}) => {
 
     const [current, setCurrent] = useState(1);
@@ -208,7 +215,7 @@ const LedgerMonthList = (props) => {
 
     return (
         <div className={monthLedgerViewStyle}>
-            <header>{monthName[props.month - 1]}月账目</header>
+            <header><MonthNameLabel month={props.month - 1} /></header>
             <main>
                 <section>
                     <div><label>月收入<span className="val income">{overview.income}</span></label></div>
