@@ -39,33 +39,6 @@ const monthLedgerViewStyle = css`
     main {
         margin: 10px;
 
-        section {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-
-            div {
-                margin: 0px 10px 10px 10px;
-            }
-
-            label {
-                font-size: 16px;
-            }
-
-            .val {
-                margin-left: 5px;
-                font-size: 32px;
-            }
-
-            .income {
-                color: #2ecc71;
-            }
-
-            .outgoing {
-                color: #e74c3c;
-            }
-        }
-
         table {
             border-collapse: collapse;
             border: 1px solid #ecf0f1;
@@ -128,11 +101,48 @@ const pageSelectorStyle = css`
     }
 `;
 
+const monthOverviewStyle = css`
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    label {
+        font-size: 16px;
+    }
+
+    .val {
+        margin-left: 5px;
+        font-size: 32px;
+    }
+
+    .income {
+        color: #2ecc71;
+    }
+
+    .outgoing {
+        color: #e74c3c;
+    }
+`;
+
 const MonthNameLabel = ({month}) => {
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
     return (<>
         <span>{monthName[month]}月账单</span>
     </>)
+};
+
+const MonthOverview = ({year, month}) => {
+    const [overview, setOverview] = useState({});
+    useEffect(() => {
+        ledger.getOverviewInMonth(year, month).then(setOverview).catch(err => alert(err));
+    }, [year, month])
+
+    return (
+        <div className={monthOverviewStyle}>
+            <div><label>月收入<span className="val income">{overview.income}</span></label></div>
+            <div><label>月支出<span className="val outgoing">{overview.outgoing}</span></label></div>
+        </div>
+    )
 };
 
 const PageSelector = ({onChange, size, total}) => {
@@ -191,7 +201,6 @@ const PageSelector = ({onChange, size, total}) => {
 const LedgerMonthList = (props) => {
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [overview, setOverview] = useState([]);
     const [page, setPage] = useState({offset: 0, limit: 5});
     const [total, setTotal] = useState(0);
 
@@ -206,21 +215,15 @@ const LedgerMonthList = (props) => {
                 setItems(data.items);
             }),
             ledger.getCategories().then(setCategories),
-            ledger.getOverviewInMonth(props.year, props.month).then(setOverview),
         ])
         .catch(handleError)
     }, [props.year, props.month, page]);
-
-    const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
 
     return (
         <div className={monthLedgerViewStyle}>
             <header><MonthNameLabel month={props.month - 1} /></header>
             <main>
-                <section>
-                    <div><label>月收入<span className="val income">{overview.income}</span></label></div>
-                    <div><label>月支出<span className="val outgoing">{overview.outgoing}</span></label></div>
-                </section>
+                <MonthOverview year={props.year} month={props.month} />
                 <table>
                     <thead><tr><th>时间</th><th>收支</th><th>类型</th><th>金额</th></tr></thead>
                     <tbody>
