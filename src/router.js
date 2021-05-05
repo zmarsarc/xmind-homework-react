@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import LedgerMonthList from "./components/LedgerMonthList.js";
+import MonthView from './components/MonthView.js';
 
 const pathToRegexp = path => new RegExp("^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "(.+)") + "$");
 
@@ -20,9 +20,9 @@ const route = () => {
             const thisMonth = now.getMonth() + 1;
             const thisYear = now.getFullYear();
             window.history.replaceState(null, null, `/ledger/month/${thisYear}/${thisMonth}`);
-            return <LedgerMonthList month={thisMonth} />;
+            return <MonthView year={thisYear} month={thisMonth}/>;
         }},
-        {path: "/ledger/month/:year/:month", view: ({year, month}) => <LedgerMonthList year={year} month={month} />}
+        {path: "/ledger/month/:year/:month", view: ({year, month}) => <MonthView year={year} month={month}/>}
     ]
 
     const potentialMatch = routes.map(r => {

@@ -116,7 +116,7 @@ module.exports = {
 
     // router: GET /api/overview
     // router: GET /api/overview/month/:month
-    getOverview(readLedger) {
+    getOverview: (readLedger) => {
         return async(ctx, next) => {
             let items = []
             if (ctx.params) {
@@ -139,6 +139,35 @@ module.exports = {
             }
 
             ctx.body = resp.json({outgoing: output, income: input});
+        }
+    },
+
+    // 获取月度列表
+    // router: GET /api/month
+    getMonthList: (reader) => {
+        return async(ctx, next) => {
+            ctx.logger.debug(`${ctx.user.name} get month list`);
+            const {items} = await reader({userId: ctx.user.id});
+
+            for (let i in items) {
+                const date = new Date(items[i].eventTime);
+                items[i].yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }
+
+            const month = {};
+            for (let i of items) {
+                if (!month[i.yearMonth]) {
+                    month[i.yearMonth] = {date: i.yearMonth, income: 0, outgoing: 0}
+                }
+                if (i.type === 0) {
+                    month[i.yearMonth].outgoing += i.amount;
+                }
+                if (i.type === 1) {
+                    month[i.yearMonth].income += i.amount;
+                }
+            }
+
+            ctx.body = resp.json(Object.values(month).sort((i, j) => { return j.date.localeCompare(i.date); }));
         }
     }
 }

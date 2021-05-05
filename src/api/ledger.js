@@ -12,6 +12,10 @@ const getOverviewInMonth = async (year, month) => {
     return request.get(`/api/overview/${year}/${month}`);
 }
 
-const ledger = { getItemsInMonth, getCategories, getOverviewInMonth };
+const getMonthList = async () => {
+    return request.get('/api/month');
+}
+
+const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList };
 
 export default ledger;
