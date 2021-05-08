@@ -198,6 +198,26 @@ const PageSelector = ({onChange, size, total}) => {
     )
 }
 
+const categoryFilterBoxStyle = css`
+    display: none;
+
+    &.active {
+        display: block;
+        position: absolute;
+        background-color: #FFF;
+    }
+`;
+
+const CategoryFilterBox = props => {
+    return (
+        <div className={props.open ? `${categoryFilterBoxStyle} active` : categoryFilterBoxStyle}>
+            {props.categories.map(val => {
+                return <div key={val.id} onClick={() => props.onChange(val.id)}>{val.name}</div>
+            })}
+        </div>
+    )
+};
+
 const LedgerMonthList = (props) => {
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -205,7 +225,9 @@ const LedgerMonthList = (props) => {
     const [total, setTotal] = useState(0);
     const [order, setOrder] = useState(2);
     const [type, setType] = useState(0);
-    
+    const [categoryBoxOpen, setCategoryBoxOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('');
+
     const handleError = err => {
         alert(err);
     };
@@ -224,14 +246,14 @@ const LedgerMonthList = (props) => {
             4: 'amount des',
         };
         Promise.all([
-            ledger.getItemsInMonth(props.year, props.month, {offset: page.offset, limit: page.limit, order: orderType[order], type: type}).then(data => {
+            ledger.getItemsInMonth(props.year, props.month, {offset: page.offset, limit: page.limit, order: orderType[order], type: type, category: selectedCategory}).then(data => {
                 setTotal(data.total);
                 setItems(data.items);
             }),
             ledger.getCategories().then(setCategories),
         ])
         .catch(handleError)
-    }, [props.year, props.month, page, order, type]);
+    }, [props.year, props.month, page, order, type, selectedCategory]);
 
     return (
         <div className={monthLedgerViewStyle}>
@@ -239,7 +261,11 @@ const LedgerMonthList = (props) => {
             <main>
                 <MonthOverview year={props.year} month={props.month} />
                 <table>
-                    <thead><tr><th onClick={() => setOrder(order === 1 ? 2 : 1)}>时间</th><th onClick={() => setType((type + 1) % 3)}>{typeName[type]}</th><th>类型</th><th onClick={() => setOrder(order === 3 ? 4 : 3)}>金额</th></tr></thead>
+                    <thead><tr>
+                        <th onClick={() => setOrder(order === 1 ? 2 : 1)}>时间</th>
+                        <th onClick={() => setType((type + 1) % 3)}>{typeName[type]}</th>
+                        <th onClick={() => setCategoryBoxOpen(!categoryBoxOpen)}>类型<CategoryFilterBox open={categoryBoxOpen} categories={categories} onChange={setSelectedCategory}/></th>
+                        <th onClick={() => setOrder(order === 3 ? 4 : 3)}>金额</th></tr></thead>
                     <tbody>
                         {items.map(v => {
                             return <LedgerItem key={v.id} value={v} categories={categories} />

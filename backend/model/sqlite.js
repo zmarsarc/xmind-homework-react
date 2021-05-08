@@ -139,6 +139,12 @@ module.exports = class {
                     queryTotalSql += cond;
                 }
 
+                if (query.category && query.category !== '') {
+                    let cond = ' and category = @category';
+                    querySql += cond;
+                    queryTotalSql += cond;
+                }
+
                 if (query.order) {
                     switch (query.order) {
                         case 'date asc':
