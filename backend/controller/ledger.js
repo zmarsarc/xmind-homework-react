@@ -67,6 +67,7 @@ module.exports = {
                 offset: ctx.query.offset,
                 limit: ctx.query.limit,
                 order: ctx.query.order ? ctx.query.order : 'date des',
+                type: ctx.query.type ? Number(ctx.query.type) : 0,
             };
 
             ctx.logger.debug(`read ledger items of ${ctx.user.name} in month ${month}`);

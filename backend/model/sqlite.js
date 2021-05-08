@@ -120,6 +120,25 @@ module.exports = class {
                     queryTotalSql += cond; 
                 }
 
+                if (query.type) {
+                    let cond = ''
+                    switch (query.type) {
+                        case 0:
+                            cond = ' and type in (0, 1)';
+                            break;
+                        case 1:
+                            cond = ' and type = 1';
+                            break;
+                        case 2:
+                            cond = ' and type = 0';
+                            break;
+                        default:
+                            break;
+                    }
+                    querySql += cond;
+                    queryTotalSql += cond;
+                }
+
                 if (query.order) {
                     switch (query.order) {
                         case 'date asc':
