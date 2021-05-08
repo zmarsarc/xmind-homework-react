@@ -203,21 +203,29 @@ const LedgerMonthList = (props) => {
     const [categories, setCategories] = useState([]);
     const [page, setPage] = useState({offset: 0, limit: 5});
     const [total, setTotal] = useState(0);
+    const [order, setOrder] = useState(2);
 
+    
     const handleError = err => {
         alert(err);
-    }
+    };
 
     useEffect(() => {
+        const orderType = {
+            1: 'date asc',
+            2: 'date des',
+            3: 'amount asc',
+            4: 'amount des',
+        };
         Promise.all([
-            ledger.getItemsInMonth(props.year, props.month, page.offset, page.limit).then(data => {
+            ledger.getItemsInMonth(props.year, props.month, {offset: page.offset, limit: page.limit, order: orderType[order]}).then(data => {
                 setTotal(data.total);
                 setItems(data.items);
             }),
             ledger.getCategories().then(setCategories),
         ])
         .catch(handleError)
-    }, [props.year, props.month, page]);
+    }, [props.year, props.month, page, order]);
 
     return (
         <div className={monthLedgerViewStyle}>
@@ -225,7 +233,7 @@ const LedgerMonthList = (props) => {
             <main>
                 <MonthOverview year={props.year} month={props.month} />
                 <table>
-                    <thead><tr><th>时间</th><th>收支</th><th>类型</th><th>金额</th></tr></thead>
+                    <thead><tr><th onClick={() => setOrder(order === 1 ? 2 : 1)}>时间</th><th>收支</th><th>类型</th><th onClick={() => setOrder(order === 3 ? 4 : 3)}>金额</th></tr></thead>
                     <tbody>
                         {items.map(v => {
                             return <LedgerItem key={v.id} value={v} categories={categories} />

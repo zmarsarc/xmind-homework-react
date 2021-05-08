@@ -120,6 +120,25 @@ module.exports = class {
                     queryTotalSql += cond; 
                 }
 
+                if (query.order) {
+                    switch (query.order) {
+                        case 'date asc':
+                            querySql += ' order by event_time asc';
+                            break;
+                        case 'date des':
+                            querySql += ' order by event_time desc';
+                            break;
+                        case 'amount asc':
+                            querySql += ' order by amount asc';
+                            break;
+                        case 'amount des':
+                            querySql += ' order by amount desc';
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
                 if (query.offset && query.limit) {
                     querySql += ' limit @limit offset @offset'
                 }

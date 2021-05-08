@@ -1,7 +1,7 @@
 import request from '../utils/request.js';
 
-const getItemsInMonth = async (year, month, offset, limit) => {
-    return request.get(`/api/ledger/item/${year}/${month}`, {offset: offset, limit: limit});
+const getItemsInMonth = async (year, month, filter) => {
+    return request.get(`/api/ledger/item/${year}/${month}`, filter);
 };
 
 const getCategories = async () => {

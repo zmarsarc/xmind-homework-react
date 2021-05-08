@@ -59,8 +59,18 @@ module.exports = {
                 ctx.body = resp.invalidParams;
                 return;
             }
+
+            const filter = {
+                userId: ctx.user.id,
+                year: year,
+                month: month,
+                offset: ctx.query.offset,
+                limit: ctx.query.limit,
+                order: ctx.query.order ? ctx.query.order : 'date des',
+            };
+
             ctx.logger.debug(`read ledger items of ${ctx.user.name} in month ${month}`);
-            ctx.body = resp.json(await readItem({userId: ctx.user.id, year: year, month: month, offset: ctx.query.offset, limit: ctx.query.limit}));
+            ctx.body = resp.json(await readItem(filter));
         }
     },
 
