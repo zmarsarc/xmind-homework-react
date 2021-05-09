@@ -17,7 +17,7 @@ apiRouter.use(async(ctx, next) => {
     await next();
 })
 
-apiRouter.use(body());
+apiRouter.use(body({multipart: true}));
 
 apiRouter.use(async(ctx, next) => {
     try {
@@ -44,5 +44,6 @@ apiRouter.get('/category/type/:typeid', ledger.getCategoryByType((userid, typeid
 apiRouter.get('/overview', ledger.getOverview(filter => backend.getItem(filter)));
 apiRouter.get('/overview/:year/:month', ledger.getOverview(filter => backend.getItem(filter)));
 apiRouter.get('/month', ledger.getMonthList(filter => backend.getItem(filter)));
+apiRouter.post('/ledger/file', ledger.importLedger((userId, bills) => backend.saveImportBills(userId, bills)));
 
 module.exports = apiRouter;

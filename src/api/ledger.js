@@ -16,6 +16,10 @@ const getMonthList = async () => {
     return request.get('/api/month');
 }
 
-const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList };
+const uploadLedgerFile = async file => {
+    return request.postForm('/api/ledger/file', file);
+}
+
+const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList, uploadLedgerFile };
 
 export default ledger;

@@ -32,6 +32,14 @@ const post = async (url, body) => {
     return handleResponse(resp);
 }
 
-const request = { get, post };
+const postForm = async (url, body) => {
+    const resp = await fetch(url, {
+        method: 'POST',
+        body: body,
+    })
+    return handleResponse(resp);
+}
+
+const request = { get, post, postForm };
 
 export default request;

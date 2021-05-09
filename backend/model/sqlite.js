@@ -207,4 +207,24 @@ module.exports = class {
             reject(new Error('no category id or user id specified.'));
         })
     }
+
+    // bills like: [{type: 0, time: Date(), category: 'xxxx', amount: 100}]
+    async saveImportBills(userId, bills) {
+        const findCategoryId = this.db.prepare('select id from category where user_id = ? and name = ?');
+        const insertMany = this.db.transaction(async bills => {
+            for (let b of bills) {
+                const category = findCategoryId.get(userId, b.name);
+                if (!category) {
+                    // 没有类目需要新增类目
+                    b.category = await this.saveCategory(userId, {type: b.type, name: b.category});
+                }
+                else {
+                    b.category = category.id;
+                }
+                await this.saveItem(userId, {time: b.time.getTime(), input: b.type, type: b.category, amount: b.amount});
+            }
+        })
+
+        return insertMany(bills)
+    }
 }

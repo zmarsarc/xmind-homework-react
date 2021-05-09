@@ -1,4 +1,7 @@
 const resp = require('./response.js');
+const csv = require('csv');
+const fs = require('fs');
+const { handleUserBills } = require('../logic/bills.js');
 
 module.exports = {
     // 添加账目中间件
@@ -180,6 +183,37 @@ module.exports = {
             }
 
             ctx.body = resp.json(Object.values(month).sort((i, j) => { return j.date.localeCompare(i.date); }));
+        }
+    },
+
+    // 导入账单文件
+    // router: POST /api/ledger/file
+    importLedger: (saver) => {
+        return async(ctx, next) => {
+            ctx.logger.debug(`${ctx.user.name} import ledger file`);
+            if (!ctx.request.files) {
+                ctx.body = resp.invalidParams;
+                return await next();
+            }
+
+            const readProcesses = [];
+            for (let file of ctx.request.files.files) {
+                const parseProcess = new Promise((resolve, reject) => {
+                    const parse = csv.parse({delimiter: ','}, (err, records) => {
+                        if (err) reject(err);
+                        resolve(records);
+                    });
+                    const rs = fs.createReadStream(file.path);
+                    rs.pipe(parse);
+                })
+                readProcesses.push(parseProcess);
+            }
+            
+            const files = await Promise.all(readProcesses);
+            const bills = await handleUserBills(files);
+            await saver(ctx.user.id, bills);
+
+            ctx.body = resp.ok;
         }
     }
 }
