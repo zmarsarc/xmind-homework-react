@@ -27,7 +27,7 @@ module.exports = class {
             id integer primary key not null, 
             user_id integer not null references users(id),
             event_time datetime not null,
-            write_time datetime not null default current_time,
+            write_time timestamp not null default current_timestamp,
             type int not null,
             category varchar(10) not null references category(id),
             amount decimal(12,2) not null
@@ -94,7 +94,7 @@ module.exports = class {
         return new Promise((resolve) => {
             const sql = `
             insert into ledger(user_id, event_time, type, category, amount)
-            values (?, ?, ?, ?, ?)`;
+            values (?, strftime('%Y-%m-%d %H:%M:%S', ?, 'unixepoch', 'localtime'), ?, ?, ?)`;
             resolve(this.db.prepare(sql).run(userid, item.time, item.input, item.type, item.amount).lastInsertRowid);
         })
     }
@@ -114,11 +114,8 @@ module.exports = class {
                 let querySql = sql + ' where user_id = @userId';
 
                 if (query.year && query.month) {
-                    const time = new Date(0);
-                    query.startTime = time.setFullYear(query.year, query.month - 1, 1);
-                    query.endTime = time.setMonth(query.month, 0);
-
-                    const cond = ' and event_time between @startTime and @endTime'
+                    query.yearMonth = `${query.year}-${String(query.month).padStart(2, '0')}`;
+                    const cond = ` and strftime('%Y-%m', event_time, 'localtime') = @yearMonth`
                     querySql += cond;
                     queryTotalSql += cond; 
                 }
@@ -224,7 +221,7 @@ module.exports = class {
                 else {
                     b.category = category.id;
                 }
-                await this.saveItem(userId, {time: b.time.getTime(), input: b.type, type: b.category, amount: b.amount});
+                await this.saveItem(userId, {time: b.time.getTime() / 1000, input: b.type, type: b.category, amount: b.amount});
             }
         })
 

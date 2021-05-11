@@ -272,7 +272,7 @@ const LedgerMonthList = (props) => {
                         })}
                     </tbody>
                 </table>
-                <PageSelector onChange={setPage} size={5} total={total}/>
+                <PageSelector onChange={setPage} size={10} total={total}/>
             </main>
         </div>
     )
