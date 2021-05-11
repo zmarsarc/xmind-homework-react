@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { css } from '@emotion/css';
 import ledger from '../api/ledger.js';
 
@@ -218,6 +218,19 @@ const CategoryFilterBox = props => {
     )
 };
 
+const emptyHitStyle = css`
+    font-size: 20px;
+    padding: 5px;
+`;
+
+const EmptyHit = () => {
+    return (
+        <React.Fragment>
+            <tr className={emptyHitStyle}><td>还没有账单</td></tr>
+        </React.Fragment>
+    )
+}
+
 const LedgerMonthList = (props) => {
     const [items, setItems] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -237,6 +250,8 @@ const LedgerMonthList = (props) => {
         1: '收入',
         2: '支出'
     };
+
+    const listItems = () => items.map(v => <LedgerItem key={v.id} value={v} categories={categories} />);
 
     useEffect(() => {
         const orderType = {
@@ -267,9 +282,7 @@ const LedgerMonthList = (props) => {
                         <th onClick={() => setCategoryBoxOpen(!categoryBoxOpen)}>类型<CategoryFilterBox open={categoryBoxOpen} categories={categories} onChange={setSelectedCategory}/></th>
                         <th onClick={() => setOrder(order === 3 ? 4 : 3)}>金额</th></tr></thead>
                     <tbody>
-                        {items.map(v => {
-                            return <LedgerItem key={v.id} value={v} categories={categories} />
-                        })}
+                        {items.length === 0 ? <EmptyHit /> : listItems()}
                     </tbody>
                 </table>
                 <PageSelector onChange={setPage} size={10} total={total}/>
