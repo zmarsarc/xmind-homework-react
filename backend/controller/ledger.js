@@ -34,6 +34,7 @@ module.exports = {
                 ctx.body = resp.invalidParams;
                 return;
             }
+            ctx.request.body.time /= 1000;
 
             await saveItem(ctx.user.id, ctx.request.body);
             ctx.body = resp.ok;
