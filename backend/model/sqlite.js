@@ -18,7 +18,8 @@ module.exports = class {
             create_time datetime not null default current_time,
             last_login datetime,
             role integer not null
-        )`
+        );
+        insert or ignore into users (id, username, password, role) values (1, 'admin', '', 0);`
 
         // 账单表模板
         const ledgerSchema = `
@@ -30,7 +31,8 @@ module.exports = class {
             type int not null,
             category varchar(10) not null references category(id),
             amount decimal(12,2) not null
-        )`
+        );
+        create index if not exists ledger_user_id on ledger (user_id);`
 
         // 类目表模板
         const categorySchema = `
@@ -40,12 +42,13 @@ module.exports = class {
             write_time datetime not null default current_time,
             type int not null,
             name text not null
-        )`
+        );
+        create unique index if not exists user_category_name on category (user_id, name);`
 
         this.db.pragma('foreign_key = ON');
-        this.db.prepare(userSchema).run();
-        this.db.prepare(categorySchema).run();
-        this.db.prepare(ledgerSchema).run();
+        this.db.exec(userSchema);
+        this.db.exec(categorySchema);
+        this.db.exec(ledgerSchema);
     }
 
     close() {
@@ -213,7 +216,7 @@ module.exports = class {
         const findCategoryId = this.db.prepare('select id from category where user_id = ? and name = ?');
         const insertMany = this.db.transaction(async bills => {
             for (let b of bills) {
-                const category = findCategoryId.get(userId, b.name);
+                const category = findCategoryId.get(userId, b.category);
                 if (!category) {
                     // 没有类目需要新增类目
                     b.category = await this.saveCategory(userId, {type: b.type, name: b.category});
