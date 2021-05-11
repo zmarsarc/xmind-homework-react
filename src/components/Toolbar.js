@@ -75,7 +75,6 @@ export const Toolbar = props => {
                         <div className="icon"><i className="fas fa-file-import"></i></div>
                         <input type='file' multiple ref={inputRef} onChange={e => uploadFile(e.target.files)}/>
                     </button>
-                    <button><div className="icon"><i className="fas fa-file-export"></i></div></button>
                 </div>
             </div>
             {addItemOpen ? <AddItem onClose={() => setAddItemOpen(false)}/> : ''}

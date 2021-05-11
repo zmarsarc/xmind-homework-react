@@ -34,7 +34,7 @@ const Nav = () => {
 
   return (
     <div className={navStyle}>
-      <a href="/dashbroad" onClick={e => navigateTo(e, '/dashbroad')}>总览</a>
+      {/* <a href="/dashbroad" onClick={e => navigateTo(e, '/dashbroad')}>总览</a> */}
       <a href="/month" onClick={e => navigateTo(e, '/month')}>月度视图</a>
     </div>
   )
