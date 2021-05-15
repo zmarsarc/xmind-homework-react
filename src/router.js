@@ -13,7 +13,7 @@ const getParams = match => {
 
 const route = () => {
     const routes = [
-        {path: "/dashbroad", view: () => (<h1>this is dashbroad</h1>)},
+        // {path: "/dashbroad", view: () => (<h1>this is dashbroad</h1>)},
         {path: "/month", view: () => {
             // 直接访问month跳转到当月的账单
             const now = new Date();

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import api from '../api/ledger.js'
 import { css } from '@emotion/css';
+import style from '../styles/global.js';
 
 const monthListStyle = css`
     display: inline-block;
     font-size: 24px;
+    margin-right: 20px;
 
     ul {
         li {
@@ -12,6 +14,7 @@ const monthListStyle = css`
             box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
             user-select: none;
             cursor: pointer;
+            list-style: none;
 
             :hover {
                 background-color: #ecf0f1;
@@ -32,6 +35,7 @@ const MonthList = ({onChange}) => {
 
     return (
         <div className={monthListStyle}>
+            <header className={style.boxHeader}>月份选择</header>
             <ul>
                 {month.map(val => {
                     return <li key={val.date} onClick={() => {

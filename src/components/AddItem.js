@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import datetime from '../utils/datetime.js';
+import CategoryPicker from './CategoryPicker.js';
 
 const popupBlock = css`
     background-color: #ecf0f1;
@@ -77,58 +78,6 @@ const datetimePickerStyle = css`
             }
             .up, .down {
                 padding: 0px 5px;
-            }
-        }
-    }
-`;
-
-const categoryPickerStyle = css`
-    display: inline-block;
-    position: relative;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 500;
-    
-    .selected-category {
-        user-select: none;
-        cursor: pointer;  
-        :hover {
-            background-color: #bdc3c7;
-        }
-        :active {
-            background-color: #ecf0f1;
-        }
-    }
-
-    .selected-category {
-        font-size: 24px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 5px;
-    }
-
-    .picker {
-        display: none;
-    }
-    .picker.active {
-        ${popupBlock}
-
-        .types {
-            display: flex;
-            div {
-                padding: 10px;
-                ${buttonLike}
-            }
-        }
-
-        .categories {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-
-            div {
-                padding: 5px;
-                ${buttonLike}
             }
         }
     }
@@ -240,51 +189,6 @@ const DatetimePicker = props => {
                         <div className="min">{datetime.formatMinute(time)}</div>
                         <div className="up" onClick={() => setCurrent(time.setMinutes(time.getMinutes() + 1))}>{'>'}</div>
                     </div>
-                </div>
-            </div>
-        </div>
-    )
-};
-
-const CategoryPicker = props => {
-    const [category, setCategory] = useState(null);
-    const [type, setType] = useState(0);
-    const [categories, setCategories] = useState([]);
-    const [pickerOpen, setPickerOpen] = useState(false);
-
-    useEffect(() => {
-        fetch('/api/category/')
-        .then(resp => {
-            if (!resp.ok) {
-                throw new Error(resp.statusText);
-            }
-            return resp.json();
-        })
-        .then(json => {
-            if (json.code !== 0) {
-                throw new Error(json.msg);
-            }
-            setCategories(json.data);
-        })
-        .catch(err => console.error(err));
-    }, [type]);
-
-    useEffect(() => {
-        props.onChange(category);
-    }, [props, category]);
-
-    return (
-        <div className={categoryPickerStyle}>
-            <div className='selected-category' onClick={() => setPickerOpen(!pickerOpen)}>{category === null ? '选择类型' : category.name}</div>
-            <div className={pickerOpen? 'picker active': 'picker'}>
-                <div className='types'>
-                    <div onClick={() => setType(0)}>支出</div>
-                    <div onClick={() => setType(1)}>收入</div>
-                </div>
-                <div className='categories'>
-                    {categories.filter(elem => elem.type === type).map(val => {
-                        return (<div key={val.id} onClick={() => setCategory(val)}>{val.name}</div>)
-                    })}
                 </div>
             </div>
         </div>

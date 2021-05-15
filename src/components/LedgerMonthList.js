@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { css } from '@emotion/css';
 import ledger from '../api/ledger.js';
+import style from '../styles/global.js';
 
 const LedgerItem = ({ value, categories }) => {
 
@@ -29,12 +30,6 @@ const LedgerItem = ({ value, categories }) => {
 const monthLedgerViewStyle = css`
     display: inline-block;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
-
-    header {
-        font-size: 36px;
-        background-color: #3498db;
-        padding: 10px;
-    }
 
     main {
         margin: 10px;
@@ -272,7 +267,7 @@ const LedgerMonthList = (props) => {
 
     return (
         <div className={monthLedgerViewStyle}>
-            <header><MonthNameLabel month={props.month - 1} /></header>
+            <header className={style.boxHeader}><MonthNameLabel month={props.month - 1} /></header>
             <main>
                 <MonthOverview year={props.year} month={props.month} />
                 <table>
