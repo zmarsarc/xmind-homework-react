@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
+import style from '../styles/global.js';
 import datetime from '../utils/datetime.js';
 import CategoryPicker from './CategoryPicker.js';
 
@@ -167,6 +168,7 @@ const DatetimePicker = props => {
         <div className={datetimePickerStyle}>
             <div className="selected-datetime" onClick={() => setPickerOpen(!pickerOpen)}>{datetime.format(time)}</div>
             <div className={pickerOpen ? "picker active" : "picker"}>
+                <div className={style.invisibleFullScreenMask} onClick={() => setPickerOpen(false)}></div>
                 <div className="date">
                     <div className="month">
                         <div className="prev" onClick={() => setCurrent(time.setMonth(time.getMonth() - 1))}>{'<'}</div>

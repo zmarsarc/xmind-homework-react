@@ -26,6 +26,16 @@ const boxHeader = css`
     padding: 10px;
 `;
 
-const style = { popupBlock, buttonLike, boxHeader };
+// 用来处理组件外点击关闭组件
+const invisibleFullScreenMask = css`
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: -1;
+`;
+
+const style = { popupBlock, buttonLike, boxHeader, invisibleFullScreenMask };
 
 export default style;

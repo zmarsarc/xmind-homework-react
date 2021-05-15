@@ -28,7 +28,7 @@ const disactivePicker = css`
     display: none;
 `;
 
-const activePicker = css `
+const activePicker = css`
     ${style.popupBlock}
     .types {
         display: flex;
@@ -72,6 +72,7 @@ const CategoryPicker = props => {
         <div className={categoryPickerStyle}>
             <div className={selectedCategory} onClick={() => setPickerOpen(!pickerOpen)}>{category === null ? '选择类型' : category.name}</div>
             <div className={pickerOpen? activePicker : disactivePicker}>
+                <div className={style.invisibleFullScreenMask} onClick={() => setPickerOpen(false)}></div>
                 <div className='types'>
                     {types.map(val => <div key={val.id} onClick={() => setType(val.id)} className={type === val.id ? selectedType : ''}>{val.name}</div>)}
                 </div>
