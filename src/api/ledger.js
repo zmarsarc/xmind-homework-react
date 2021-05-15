@@ -20,6 +20,10 @@ const uploadLedgerFile = async file => {
     return request.postForm('/api/ledger/file', file);
 }
 
-const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList, uploadLedgerFile };
+const addCategory = async category => {
+    return request.post('/api/category', category)
+}
+
+const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList, uploadLedgerFile, addCategory };
 
 export default ledger;
