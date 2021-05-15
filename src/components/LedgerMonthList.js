@@ -119,10 +119,10 @@ const monthOverviewStyle = css`
     }
 `;
 
-const MonthNameLabel = ({month}) => {
+const MonthNameLabel = ({year, month}) => {
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
     return (<>
-        <span>{monthName[month]}月账单</span>
+        <span>{year}年{monthName[month]}月账单</span>
     </>)
 };
 
@@ -267,7 +267,7 @@ const LedgerMonthList = (props) => {
 
     return (
         <div className={monthLedgerViewStyle}>
-            <header className={style.boxHeader}><MonthNameLabel month={props.month - 1} /></header>
+            <header className={style.boxHeader}><MonthNameLabel year={props.year} month={props.month - 1} /></header>
             <main>
                 <MonthOverview year={props.year} month={props.month} />
                 <table>

@@ -41,7 +41,7 @@ const MonthList = ({onChange}) => {
                     return <li key={val.date} onClick={() => {
                         const [year, month] = val.date.split('-');
                         onChange({year: Number(year), month: Number(month)});
-                    }}>{`${val.date} income: ${val.income} outgoing: ${val.outgoing}`}</li>
+                    }}>{`${val.date} 收入 ${val.income} 支出 ${val.outgoing}`}</li>
                 })}
             </ul>
         </div>
