@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { css } from '@emotion/css';
+import style from '../../styles/global.js';
 
 // 类型选择器关闭时的样式
 const categoryFilterBoxDisactiveStyle = css`
@@ -8,9 +9,16 @@ const categoryFilterBoxDisactiveStyle = css`
 
 // 类型选择器打开时的样式
 const categoryFilterBoxActiveStyle = css`
-    display: block;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    max-height: 300px;
+    overflow-y: auto;
     position: absolute;
     background-color: #FFF;
+
+    div {
+        ${style.buttonLike}
+    }
 `;
 
 // 账单过滤器的样式
@@ -64,6 +72,28 @@ const nextType = state => {
     return types.InAndOut;
 }
 
+// 展示时间升/降序排列图标
+const dateOrderIcon = order => {
+    if (order === orders.DateAsc) {
+        return '▲';
+    }
+    if (order === orders.DateDes) {
+        return '▼';
+    }
+    return '';
+}
+
+// 展示金额升/降序排列图标
+const amountOrderIcon = order => {
+    if (order === orders.AmountAsc) {
+        return '▲';
+    }
+    if (order === orders.AmountDes) {
+        return '▼';
+    }
+    return '';
+}
+
 // 默认选择的类型
 const allCategory = {id: '', name: '全部类型'}
 
@@ -92,13 +122,17 @@ const BillFilter = ({categories, value, onChange}) => {
     
     return <>
         <tr className={billFilterStyle}>
-            <th onClick={() => onChange({...value, order: switchDateOrder(value.order)})}>时间</th>
+            <th onClick={() => onChange({...value, order: switchDateOrder(value.order)})}>
+                时间{dateOrderIcon(value.order)}
+            </th>
             <th onClick={() => onChange({...value, type: nextType(value.type)})}>{value.type.name}</th>
             <th onClick={() => setCategoryBoxOpen(!categoryBoxOpen)}>
                 {value.category.name}
                 <CategoryFilterBox open={categoryBoxOpen} categories={categories} onChange={c => onChange({...value, category: c})}/>
             </th>
-            <th onClick={() => onChange({...value, order: switchAmountOrder(value.order)})}>金额</th>
+            <th onClick={() => onChange({...value, order: switchAmountOrder(value.order)})}>
+                金额{amountOrderIcon(value.order)}
+            </th>
         </tr>
     </>
 }
