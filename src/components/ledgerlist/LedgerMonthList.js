@@ -5,7 +5,7 @@ import style from '../../styles/global.js';
 import billFilter from './BillFIlter.js';
 import pageSelector from './PageSelector.js';
 import useBillUpdate from '../../hooks/useBillUpdate.js';
-import { actionCodes, actions, LedgerListContext } from './context.js';
+import { actionCodes, actions } from './context.js';
 
 // 账单列表的样式
 const ledgerMonthListStyle = css`
@@ -217,21 +217,19 @@ const LedgerMonthList = ({year, month}) => {
 
     return (
         <div className={ledgerMonthListStyle}>
-            <LedgerListContext.Provider value={{dispatch: dispatch}}>
-                <header className={style.boxHeader}><MonthNameLabel year={state.year} month={state.month - 1} /></header>
-                <main>
-                    <MonthOverview year={state.year} month={state.month} />
-                    <table>
-                        <thead>
-                            <billFilter.BillFilter categories={state.categories} value={state.filter} onChange={f => dispatch(actions.setFilter(f))}/>
-                        </thead>
-                        <tbody>
-                            {state.items.length === 0 ? <EmptyHit /> : listItems()}
-                        </tbody>
-                    </table>
-                    <pageSelector.PageSelector value={state.page} onChange={p => dispatch(actions.setPage(p))}/>
-                </main>
-            </LedgerListContext.Provider>
+            <header className={style.boxHeader}><MonthNameLabel year={state.year} month={state.month - 1} /></header>
+            <main>
+                <MonthOverview year={state.year} month={state.month} />
+                <table>
+                    <thead>
+                        <billFilter.BillFilter categories={state.categories} value={state.filter} onChange={f => dispatch(actions.setFilter(f))}/>
+                    </thead>
+                    <tbody>
+                        {state.items.length === 0 ? <EmptyHit /> : listItems()}
+                    </tbody>
+                </table>
+                <pageSelector.PageSelector value={state.page} onChange={p => dispatch(actions.setPage(p))}/>
+            </main>
         </div>
     )
 };
