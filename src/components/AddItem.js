@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import style from '../styles/global.js';
 import datetime from '../utils/datetime.js';
 import CategoryPicker from './CategoryPicker.js';
+import useBillUpdate from '../hooks/useBillUpdate.js';
+import ledger from '../api/ledger.js';
 
 const popupBlock = css`
     background-color: #ecf0f1;
@@ -202,40 +204,20 @@ const AddItem = props => {
     const [category, setCategory] = useState(null);
     const [amount, setAmount] = useState(0);
     const [ok, setOk] = useState(false);
+    const [,,notifyItemsUpdate] = useBillUpdate();
 
     useEffect(() => {
         if (!ok) {
             return;
         }
-
         const item = {
             time: datetime,
             input: category.type,
             type: category.id,
             amount: amount
         }
-        fetch('/api/ledger/item', {
-            method: 'POST',
-            body: JSON.stringify(item),
-            headers: {
-                'Content-type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(resp => {
-            if (!resp.ok) {
-                throw new Error(resp.statusText);
-            }
-            return resp.json();
-        })
-        .then(json => {
-            if (json.code !== 0) {
-                throw new Error(json.msg);
-            }
-        })
-        .catch(err => console.error(err));
-        props.onClose();
-    }, [datetime, category, amount, ok, props])
+        ledger.addBill(item).then(notifyItemsUpdate).catch(console.error).then(props.onClose);
+    }, [datetime, category, amount, ok, props, notifyItemsUpdate])
 
     return (
         <div className={addItemStyle}>

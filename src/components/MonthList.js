@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import api from '../api/ledger.js'
 import { css } from '@emotion/css';
 import style from '../styles/global.js';
+import useBillUpdate from '../hooks/useBillUpdate.js';
 
 const monthListStyle = css`
     display: inline-block;
@@ -28,10 +29,17 @@ const monthListStyle = css`
 
 const MonthList = ({onChange}) => {
     const [month, setMonth] = useState([]);
+    const [isUpdate,accept,] = useBillUpdate();
 
     useEffect(() => {
-        api.getMonthList().then(setMonth).catch(err => alert(err));
+        api.getMonthList().then(setMonth).catch(console.error);
     }, [])
+
+    useEffect(() => {
+        if (isUpdate) {
+            api.getMonthList().then(setMonth).catch(console.error).then(accept);
+        }
+    }, [isUpdate, accept]);
 
     return (
         <div className={monthListStyle}>

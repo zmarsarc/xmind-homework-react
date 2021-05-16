@@ -24,6 +24,10 @@ const addCategory = async category => {
     return request.post('/api/category', category)
 }
 
-const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList, uploadLedgerFile, addCategory };
+const addBill = async bill => {
+    return request.post('/api/ledger/item', bill);
+}
+
+const ledger = { getItemsInMonth, getCategories, getOverviewInMonth, getMonthList, uploadLedgerFile, addCategory, addBill };
 
 export default ledger;
