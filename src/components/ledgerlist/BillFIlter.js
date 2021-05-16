@@ -1,6 +1,5 @@
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { css } from '@emotion/css';
-import { actions, LedgerListContext } from './context.js';
 
 // 类型选择器关闭时的样式
 const categoryFilterBoxDisactiveStyle = css`
@@ -65,10 +64,21 @@ const nextType = state => {
     return types.InAndOut;
 }
 
+// 默认选择的类型
+const allCategory = {id: '', name: '全部类型'}
+
+// 默认过滤器
+const initFilter = {
+    order: orders.DateDes,
+    type: types.InAndOut,
+    category: allCategory,
+}
+
 // 内部组件，类型选择器
 const CategoryFilterBox = ({open, categories, onChange}) => {
     return <>
         <div className={open ? categoryFilterBoxActiveStyle : categoryFilterBoxDisactiveStyle}>
+            <div onClick={() => onChange(allCategory)}>{allCategory.name}</div>
             {categories.map(val => {
                 return <div key={val.id} onClick={() => onChange(val)}>{val.name}</div>
             })}
@@ -77,32 +87,25 @@ const CategoryFilterBox = ({open, categories, onChange}) => {
 };
 
 // 导出组件，账单过滤器
-const BillFilter = ({categories}) => {
-    const [order, setOrder] = useState(orders.DateDes);
-    const [type, setType] = useState(types.InAndOut);
-    const [category, setCategory] = useState(null);
+const BillFilter = ({categories, value, onChange}) => {
     const [categoryBoxOpen, setCategoryBoxOpen] = useState(false);
-    const {dispatch} = useContext(LedgerListContext);
-
-    useEffect(() => {
-        dispatch(actions.setFilter({
-            order: order,
-            type: type.code,
-            category: category ? category.id : ''
-        }))
-    }, [order, type, category, dispatch])
     
     return <>
         <tr className={billFilterStyle}>
-            <th onClick={() => setOrder(switchDateOrder(order))}>时间</th>
-            <th onClick={() => setType(nextType(type))}>{type.name}</th>
+            <th onClick={() => onChange({...value, order: switchDateOrder(value.order)})}>时间</th>
+            <th onClick={() => onChange({...value, type: nextType(value.type)})}>{value.type.name}</th>
             <th onClick={() => setCategoryBoxOpen(!categoryBoxOpen)}>
-                类型
-                <CategoryFilterBox open={categoryBoxOpen} categories={categories} onChange={setCategory}/>
+                {value.category.name}
+                <CategoryFilterBox open={categoryBoxOpen} categories={categories} onChange={c => onChange({...value, category: c})}/>
             </th>
-            <th onClick={() => setOrder(switchAmountOrder(order))}>金额</th>
+            <th onClick={() => onChange({...value, order: switchAmountOrder(value.order)})}>金额</th>
         </tr>
     </>
 }
 
-export default BillFilter;
+// 导出类型，排序和组件，让父组件管理状态
+const filter = {
+    types, orders, initFilter, BillFilter
+}
+
+export default filter;

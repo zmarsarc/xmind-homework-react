@@ -2,36 +2,13 @@ import React, { useEffect, useReducer, useState } from "react";
 import { css } from '@emotion/css';
 import ledger from '../../api/ledger.js';
 import style from '../../styles/global.js';
-import BillFilter from './BillFIlter.js';
-import PageSelector from './PageSelector.js';
+import billFilter from './BillFIlter.js';
+import pageSelector from './PageSelector.js';
 import useBillUpdate from '../../hooks/useBillUpdate.js';
 import { actionCodes, actions, LedgerListContext } from './context.js';
 
-const LedgerItem = ({ value, categories }) => {
-
-    const typeNames = {
-        0: "支出",
-        1: "收入"
-    }
-
-    const categoriesName = Object.fromEntries(categories.map(v => {
-        return [v.id, v.name];
-    }))
-
-    const toTimeString = t => {
-        const time = new Date(t);
-        const pad2 = t => {
-            return String(t).padStart(2, '0');
-        }
-        return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()} ${pad2(time.getHours())}:${pad2(time.getMinutes())}`
-    }
-
-    return (
-        <tr><td>{toTimeString(value.eventTime)}</td><td>{typeNames[value.type]}</td><td>{categoriesName[value.category]}</td><td>{value.amount}</td></tr>
-    )
-};
-
-const monthLedgerViewStyle = css`
+// 账单列表的样式
+const ledgerMonthListStyle = css`
     display: inline-block;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
 
@@ -58,6 +35,7 @@ const monthLedgerViewStyle = css`
     }
 `;
 
+// 月度概览的样式
 const monthOverviewStyle = css`
     display: flex;
     justify-content: flex-start;
@@ -81,6 +59,13 @@ const monthOverviewStyle = css`
     }
 `;
 
+// 空列表占位文案的样式
+const emptyHitStyle = css`
+    font-size: 20px;
+    padding: 5px;
+`;
+
+// 月份名称标签组件
 const MonthNameLabel = ({year, month}) => {
     const monthName = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
     return (<>
@@ -88,6 +73,7 @@ const MonthNameLabel = ({year, month}) => {
     </>)
 };
 
+// 月度概览（统计）组件
 const MonthOverview = ({year, month}) => {
     const [overview, setOverview] = useState({});
     useEffect(() => {
@@ -102,11 +88,32 @@ const MonthOverview = ({year, month}) => {
     )
 };
 
-const emptyHitStyle = css`
-    font-size: 20px;
-    padding: 5px;
-`;
+// 账单项目组件
+const LedgerItem = ({ value, categories }) => {
 
+    const typeNames = {
+        0: "支出",
+        1: "收入"
+    }
+
+    const categoriesName = Object.fromEntries(categories.map(v => {
+        return [v.id, v.name];
+    }))
+
+    const toTimeString = t => {
+        const time = new Date(t);
+        const pad2 = t => {
+            return String(t).padStart(2, '0');
+        }
+        return `${time.getFullYear()}-${time.getMonth() + 1}-${time.getDate()} ${pad2(time.getHours())}:${pad2(time.getMinutes())}`
+    }
+
+    return (
+        <tr><td>{toTimeString(value.eventTime)}</td><td>{typeNames[value.type]}</td><td>{categoriesName[value.category]}</td><td>{value.amount}</td></tr>
+    )
+};
+
+// 空列表占位文案组件
 const EmptyHit = () => {
     return (
         <React.Fragment>
@@ -115,36 +122,56 @@ const EmptyHit = () => {
     )
 }
 
+// 账单列表初始状态
 const initState = {
     items: [],
     categories: [],
-    page: {offset: 0, limit: 10},
-    total: 0,
-    filter: {},
+    page: pageSelector.initState, // 托管了分页器的状态
+    filter: billFilter.initFilter, // 托管了过滤器的状态
     year: 0,
     month: 0,
-    updateRequired: false,
+    updateRequired: true,
 };
 
+// 月度账单状态处理函数
 const reducer = (state, action) => {
     switch (action.type) {
         case actionCodes.setUpdateRequired:
             return {...state, updateRequired: action.value};
         case actionCodes.setItems:
-            return {...state, items: action.value.items, total: action.value.total};
+            // 账单更新时更新分页器的总项目数
+            return {
+                ...state,
+                items: action.value.items,
+                page: {...state.page, total: action.value.total}
+            };
         case actionCodes.setCategories:
             return {...state, categories: action.value};
         case actionCodes.setPage:
-            return {...state, page: action.value, updateRequired: true};
+            // 分页器更新时计算偏移量
+            return {
+                ...state,
+                page: {...action.value, offset: (action.value.current - 1) * action.value.size},
+                updateRequired: true
+            };
         case actionCodes.setFilter:
             return {...state, filter: action.value, updateRequired: true};
         case actionCodes.setYearMonth:
-            return {...state, year: action.value.year, month: action.value.month, updateRequired: true};
+            // 切换月份后过滤器和分页器都重置
+            return {
+                ...state,
+                year: action.value.year,
+                month: action.value.month,
+                filter: billFilter.initFilter,
+                page: pageSelector.initState,
+                updateRequired: true,
+            };
         default:
             return state;
     }
 }
 
+// 导出组件，月度账单列表
 const LedgerMonthList = ({year, month}) => {
     const [state, dispatch] = useReducer(reducer, {...initState, year: year, month: month});
     const [isUpdate, accept,] = useBillUpdate();
@@ -170,10 +197,10 @@ const LedgerMonthList = ({year, month}) => {
         dispatch(actions.setUpdateRequired(false));
         const filter = {
             offset: state.page.offset,
-            limit: state.page.limit,
+            limit: state.page.size,
             order: state.filter.order,
-            type: state.filter.type,
-            category: state.filter.category
+            type: state.filter.type.code,
+            category: state.filter.category.id
         }
         Promise.all([
             ledger.getItemsInMonth(state.year, state.month, filter).then(data => dispatch(actions.setItems(data))),
@@ -189,20 +216,20 @@ const LedgerMonthList = ({year, month}) => {
     const listItems = () => state.items.map(v => <LedgerItem key={v.id} value={v} categories={state.categories} />);
 
     return (
-        <div className={monthLedgerViewStyle}>
+        <div className={ledgerMonthListStyle}>
             <LedgerListContext.Provider value={{dispatch: dispatch}}>
                 <header className={style.boxHeader}><MonthNameLabel year={state.year} month={state.month - 1} /></header>
                 <main>
                     <MonthOverview year={state.year} month={state.month} />
                     <table>
                         <thead>
-                            <BillFilter categories={state.categories}/>
+                            <billFilter.BillFilter categories={state.categories} value={state.filter} onChange={f => dispatch(actions.setFilter(f))}/>
                         </thead>
                         <tbody>
                             {state.items.length === 0 ? <EmptyHit /> : listItems()}
                         </tbody>
                     </table>
-                    <PageSelector size={state.page.limit} total={state.total}/>
+                    <pageSelector.PageSelector value={state.page} onChange={p => dispatch(actions.setPage(p))}/>
                 </main>
             </LedgerListContext.Provider>
         </div>
