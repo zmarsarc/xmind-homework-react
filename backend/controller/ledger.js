@@ -177,7 +177,6 @@ module.exports = {
                 }
                 if (i.type === 0) {
                     month[i.yearMonth].outgoing += i.amount;
-                    console.log(`outgoing: ${i.yearMonth} ${i.id} ${i.amount} ${i.type}`)
                 }
                 if (i.type === 1) {
                     month[i.yearMonth].income += i.amount;
