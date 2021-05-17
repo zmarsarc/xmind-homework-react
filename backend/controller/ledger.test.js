@@ -127,3 +127,197 @@ describe('test addItem api', function() {
         })
     })
 })
+
+describe('get items in month check url params', function() {
+    it('should return params if valid', function() {
+        expect(ledger.checkGetItemsInMonthRequestParams('2020', '10')).to.deep.equal([2020, 10, undefined]);
+    })
+    describe('if year not valid', function() {
+        it('year is required', function () {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams(undefined, '11');
+            expect(error).not.be.undefined;
+        })
+        it('year must be integer', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('100.1', '11');
+            expect(error).not.be.undefined;
+        })
+        it('year should be positive', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('-1', '11');
+            expect(error).not.be.undefined;
+        })
+        it('year shoudl be number', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('notnumber', '11');
+            expect(error).not.be.undefined;
+        })
+    })
+    describe('if month not valid', function() {
+        it('should be a number', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('2020', 'notnumber');
+            expect(error).not.be.undefined;
+        })
+        it('should greate then 0', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('2020', '0');
+            expect(error).not.be.undefined;
+        })
+        it('should less then 13', function() {
+            const [,,error] = ledger.checkGetItemsInMonthRequestParams('2020', '13');
+            expect(error).not.be.undefined;
+        })
+    })
+})
+
+describe('get items in month check query params', function() {
+    const validParams = {
+        offset: 0,
+        limit: 10,
+        order: 'date des',
+        type: 0,
+        category: '',
+    }
+    const testFunc = ledger.checkGetItemsInMonthRequestQuery;
+
+    it('should pass if valid', function() {
+        const {value} = testFunc(validParams);
+        expect(value).to.deep.equal(validParams);
+    })
+    it('should no error if valid', function() {
+        const {error} = testFunc(validParams);
+        expect(error).to.be.undefined;
+    })
+    describe('if offset is invalid', function() {
+        it('offset is required', function() {
+            const {valid, error} = testFunc({...validParams, offset: undefined});
+            expect(error).not.be.undefined;
+        })
+        it('offset must greate then 0', function() {
+            const {error} = testFunc({...validParams, offset: -1});
+            expect(error).not.be.undefined;
+        })
+        it('must be number', function() {
+            const {error} = testFunc({...validParams, offset: 'notnumber'});
+            expect(error).not.be.undefined;
+        })
+    })
+    describe('if limit is invalid', function() {
+        it('limit is required', function() {
+            const {error} = testFunc({...validParams, limit: undefined});
+            expect(error).not.be.undefined;
+        })
+        it('must be number', function() {
+            const {error} = testFunc({...validParams, limit: 'notnumber'});
+            expect(error).not.be.undefined;
+        })
+        it('must greater then 0', function() {
+            const {error} = testFunc({...validParams, limit: -1});
+            expect(error).not.be.undefined;
+        })
+        it('not accept 0', function() {
+            const {error} = testFunc({...validParams, limit: 0});
+            expect(error).not.be.undefined;
+        })
+    })
+    describe('if order not given', function() {
+        it('should use default', function() {
+            const {value} = testFunc({...validParams, order: undefined});
+            expect(value.order).to.equal('date des');
+        })
+        it('no error', function() {
+            const {error} = testFunc({...validParams, order: undefined});
+            expect(error).to.be.undefined;
+        })
+    })
+    describe('if type is not given', function() {
+        it('use default', function() {
+            const {value} = testFunc({...validParams, type: undefined});
+            expect(value.type).to.equal(0);
+        })
+        it('no error', function() {
+            const {error} = testFunc({...validParams, type: undefined});
+            expect(error).to.be.undefined;
+        })
+    })
+    describe('if category not valid', function() {
+        it('if given, it must match pattern', function() {
+            const {error} = testFunc({...validParams, category: 'not category'});
+            expect(error).not.be.undefined;
+        })
+        it('if not given, use defalut', function() {
+            const {value} = testFunc({...validParams, category: undefined});
+            expect(value.category).to.equal('');
+        })
+        it('if not given, no error', function() {
+            const {error} = testFunc({...validParams, category: undefined});
+            expect(error).to.be.undefined;
+        })
+    })
+})
+
+describe('test getItemsInMonth api', function() {
+    beforeEach(function() {
+        this.ctx = {
+            logger: logger.getLogger(),
+            user: {
+                id: 1,
+                name: 'admin',
+            },
+            params: {
+                year: '2021',
+                month: '5',
+            },
+            query: {
+                'offset': 0,
+                'limit': 10,
+            },
+        }
+    });
+
+    it('should deny if url params invalid', async function() {
+        const api = ledger.getItemsInMonth(sinon.fake.resolves());
+        this.ctx.params = {};
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal(resp.invalidParams);
+    })
+    it('should deny if query params invalid', async function() {
+        const api = ledger.getItemsInMonth(sinon.fake.resolves());
+        this.ctx.query = {};
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal(resp.invalidParams);
+    })
+    it('should ok if valid', async function() {
+        const api = ledger.getItemsInMonth(sinon.fake.resolves());
+        await api(this.ctx);
+        expect(this.ctx.body.code).to.equal(resp.ok.code);
+    })
+    describe('if call backend', function() {
+        it('must call once', async function() {
+            const backend = sinon.fake.resolves();
+            const api = ledger.getItemsInMonth(backend);
+            await api(this.ctx);
+            expect(backend.calledOnce).to.be.true;
+        })
+        it('must hava arg', async function() {
+            const expectArg = {
+                ...this.ctx.query,
+                order: 'date des',
+                type: 0,
+                category: '',
+                userId: 1,
+                year: 2021,
+                month: 5
+            };
+            const backend = sinon.fake.resolves();
+            const api = ledger.getItemsInMonth(backend);
+            await api(this.ctx);
+            expect(backend.lastCall.firstArg).to.deep.equal(expectArg);
+        })
+    })
+    it('should resp ok and data', async function() {
+        const expectResp = {
+            ...resp.ok,
+            data: [],
+        }
+        const api = ledger.getItemsInMonth(sinon.fake.resolves([]));
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal(expectResp);
+    })
+})

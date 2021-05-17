@@ -18,6 +18,43 @@ const checkAddItemRequestParams = json => {
     return error
 }
 
+// 检查getItemsInMonth接口的URL参数
+const checkGetItemsInMonthRequestParams = (y, m) => {
+    try {
+        const year = joi.attempt(y, joi.number().integer().positive().required());
+        const month = joi.attempt(m, joi.number().integer().min(1).max(12).required());
+        return [year, month, undefined];
+    }
+    catch (err) {
+        return [undefined, undefined, err];
+    }
+}
+
+// 收支类型
+const BillType = {
+    InAndOut: 0,
+    Income: 1,
+    Outgoing: 2,
+};
+
+// getItemInMonth接口查询参数定义
+const getItemsInMonthRequestQuerySchema = joi.object({
+    'offset': joi.number().integer().min(0).required(), // 分页偏移，大于0
+    'limit': joi.number().integer().positive().required(),  // 每页大小，大于0，一般是5、10、20
+    'order': joi.string().valid('date asc', 'date des', 'amount asc', 'amount des').default('date des'), // 排序基准
+    'type': joi.number().integer().min(BillType.InAndOut).max(BillType.Outgoing).default(BillType.InAndOut), // 收支类型
+    'category': joi.string().allow('').pattern(/^[a-z0-9]{0,10}$/).default('').optional(),
+});
+
+// 检查getItemInMonth的query参数
+const checkGetItemsInMonthRequestQuery = json => {
+    const {value, error} = getItemsInMonthRequestQuerySchema.validate(json);
+    if (error) {
+        return {error: error};
+    }
+    return {value: value};
+};
+
 // 添加账目中间件
 //
 // saveItem是具有async function(userid, item)签名的函数
@@ -51,48 +88,41 @@ const addItem = saveItem => {
     }
 }
 
+// router: /api/ledger/item/:year/:month
+// response: json {"code": 0, "msg": "ok", "data": {
+//    total: 1, items:[{"id": 1, "userId": 1, "eventTime": , "writeTime": , "type": , "category": , "amount": }]
+//    }}
+const getItemsInMonth = (readItem) => {
+    return async ctx => {
+        const [year, month, err] = checkGetItemsInMonthRequestParams(ctx.params.year, ctx.params.month);
+        if (err) {
+            ctx.logger.error(`invalid url params, ${err}`);
+            ctx.body = resp.invalidParams;
+            return;
+        }
+        const {value, error} = checkGetItemsInMonthRequestQuery(ctx.query);
+        if (error) {
+            ctx.logger.error(`invalid query params, ${error}`);
+            ctx.body = resp.invalidParams;
+            return;
+        }
+        const filter = {
+            ...value,
+            userId: ctx.user.id,
+            year: year,
+            month: month,
+        };
+        ctx.body = resp.json(await readItem(filter));
+    }
+}
+
 module.exports = {
     checkAddItemRequestParams,
     addItem,
-
-    getItemsInMonth: (readItem) => {
-
-        // router: /api/ledger/item/:year/:month
-        // response: json {"code": 0, "msg": "ok", "data": {
-        //    total: 1, items:[{"id": 1, "userId": 1, "eventTime": , "writeTime": , "type": , "category": , "amount": }]
-        //    }}
-        return async(ctx, next) => {
-            const year = Number(ctx.params.year);
-            const month = Number(ctx.params.month);
-            if (!month || !year) {
-                ctx.logger.error('invalid url path, can not get year-month');
-                ctx.body = resp.invalidParams;
-                return;
-            }
-            ctx.checkQuery('offset').notEmpty().isInt();
-            ctx.checkQuery('limit').notEmpty().isInt();
-            if (ctx.errors) {
-                ctx.logger.error(`invalid params when get ledger items of user ${ctx.user.name}`);
-                ctx.body = resp.invalidParams;
-                return;
-            }
-
-            const filter = {
-                userId: ctx.user.id,
-                year: year,
-                month: month,
-                offset: ctx.query.offset,
-                limit: ctx.query.limit,
-                order: ctx.query.order ? ctx.query.order : 'date des',
-                type: ctx.query.type ? Number(ctx.query.type) : 0,
-                category: ctx.query.category ? ctx.query.category : '',
-            };
-
-            ctx.logger.debug(`read ledger items of ${ctx.user.name} in month ${month}`);
-            ctx.body = resp.json(await readItem(filter));
-        }
-    },
-
+    checkGetItemsInMonthRequestParams,
+    checkGetItemsInMonthRequestQuery,
+    getItemsInMonth,
+    
     // 添加账目类目，传入参数saveCategory是一个具有 async function(number, json{"type": , "name":}) 签名的方法
     // saveCategory作为将类目数据写入持久化存储的代理
     //
