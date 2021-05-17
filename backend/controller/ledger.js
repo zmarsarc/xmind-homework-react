@@ -2,45 +2,58 @@ const resp = require('./response.js');
 const csv = require('csv');
 const fs = require('fs');
 const { handleUserBills } = require('../logic/bills.js');
+const joi = require('joi');
 
-module.exports = {
-    // 添加账目中间件
+// addItem接口输入参数的定义
+const addItemParamsSchema = joi.object({
+    'time': joi.number().integer().positive().max(2147485547).required(), // 要求传入的unix时间戳单位为s，js默认拿到的时间是ms，需要前端处理
+    'input': joi.number().integer().min(0).max(1).required(), // 收支类型只有收入和支出
+    'type': joi.string().pattern(/^[a-z0-9]{10}$/).required(), // 合法的账目id需要符合此格式
+    'amount': joi.number().positive().required(),
+});
+
+// 检查addItem的输入参数
+const checkAddItemRequestParams = json => {
+    const {error} = addItemParamsSchema.validate(json);
+    return error
+}
+
+// 添加账目中间件
+//
+// saveItem是具有async function(userid, item)签名的函数
+// 其中item结构如 {time: [number], input: [number], type: [string], amount: [number]}
+// userid是用户的id
+const addItem = saveItem => {
+    // 添加一条账目
+    // 
+    // router: [post] /api/ledger/item
     //
-    // saveItem是具有async function(userid, item)签名的函数
-    // 其中item结构如 {time: [number], input: [number], type: [string], amount: [number]}
-    // userid是用户的id
-    addItem: (saveItem) => {
-
-        // 添加一条账目
-        // 
-        // router: [post] /api/ledger/item
-        //
-        // param: [json] {time: 123123123, input: 0, type: "12348abcd", amount: 100.00}
-        //      time [number]: 账目时间，unix时间
-        //      input [number]: 入账？0代表出账，1代表入账
-        //      type [string]: 类型，用户自定的分类，记录的是分类的uuid
-        //      amount [number]: 金额
-        //
-        // response: [json] {code: 0, msg: "ok"}
-        //      code [number]: 错误码，成功为0，否则非0
-        //      msg [string]: 错误提示信息
-        return async(ctx, next) => {
-            ctx.checkBody('time').notEmpty().isInt();
-            ctx.checkBody('input').notEmpty().isInt().isIn([0, 1]);
-            ctx.checkBody('type').notEmpty();
-            ctx.checkBody('amount').notEmpty().isFloat();
-            if (ctx.errors) {
-                ctx.logger.error(`invalid params when add ledger item to user ${ctx.user.name}`);
-                ctx.body = resp.invalidParams;
-                return;
-            }
-            ctx.request.body.time /= 1000;
-
-            await saveItem(ctx.user.id, ctx.request.body);
-            ctx.body = resp.ok;
+    // param: [json] {time: 123123123, input: 0, type: "12348abcd", amount: 100.00}
+    //      time [number]: 账目时间，unix时间
+    //      input [number]: 入账？0代表出账，1代表入账
+    //      type [string]: 类型，用户自定的分类，记录的是分类的uuid
+    //      amount [number]: 金额
+    //
+    // response: [json] {code: 0, msg: "ok"}
+    //      code [number]: 错误码，成功为0，否则非0
+    //      msg [string]: 错误提示信息
+    return async ctx => {
+        const error = checkAddItemRequestParams(ctx.request.body);
+        if (error) {
+            ctx.logger.error(`invalid params: ${error}`);
+            ctx.body = resp.invalidParams;
             return;
         }
-    },
+        
+        await saveItem(ctx.user.id, ctx.request.body);
+        ctx.body = resp.ok;
+        return;
+    }
+}
+
+module.exports = {
+    checkAddItemRequestParams,
+    addItem,
 
     getItemsInMonth: (readItem) => {
 

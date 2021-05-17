@@ -1,213 +1,129 @@
-const koa = require('koa');
-const koaRouter = require('koa-router');
 const ledger = require('./ledger.js');
 const sinon = require('sinon');
-const request = require('supertest');
 const expect = require('chai').expect;
 const resp = require('./response.js');
+const logger = require('log4js');
 
-class TestServerMaker {
-    constructor(fakeUser) {
-        this.servers = [];
-        this.fakeUser = fakeUser;
+describe('add item should check params', function() {
+    const validParams = {
+        'time': Math.trunc(Date.now() / 1000),
+        'input': 1,
+        'type': 'abcdf98765',
+        'amount': 1.5,
     }
 
-    new(router) {
-        const app = new koa();
-        require('koa-validate')(app);
-        app.context.logger = require('log4js').getLogger();
-        app.use(require('koa-body')());
-        app.use(fakeLogin(this.fakeUser.id, this.fakeUser.name))
-        app.use(router);
-        
-        const server = app.listen();
-        this.servers.push(server);
-        return server;
-    }
-
-    closeAll() {
-        for (let s of this.servers) {
-            s.close();
-        }
-    }
-}
-
-function fakeLogin(userid, username) {
-    return async(ctx, next) => {
-        ctx.user = {id: userid, name: username};
-        await next();
-    }
-}
-
-describe('test save ledger item', function() {
-    const fakeUser = {id: 1, name: 'admin'};
-    const testServer = new TestServerMaker(fakeUser);
-    const apiPath = '/ledger/item';
-
-    after(() => { testServer.closeAll() })
-
-    const prepareRouter = () => {
-        const backend = sinon.fake();
-        const router = new koaRouter();
-        router.post(apiPath, ledger.addItem(backend));
-
-        return {backend: backend, router: router};
-    }
-
-    it('should check params before call backend', function(done) {
-        const env = prepareRouter();
-
-        request(testServer.new(env.router.routes())).post(apiPath).then(res => {
-            expect(res.body.code).to.equal(resp.invalidParams.code);
-            expect(env.backend.notCalled).to.be.true;
-            done();
-        })
-        .catch(done);
+    it('should pass if valid', function() {
+        expect(ledger.checkAddItemRequestParams(validParams)).to.be.undefined;
     })
-
-    it('call backend with user id and item', function(done) {
-        const env = prepareRouter();
-
-        const requestData = {time: Date.now(), input: 0, type: '123456abcdef', amount: 100.00};
-        request(testServer.new(env.router.routes())).post(apiPath)
-        .send(requestData)
-        .then(res => {
-            expect(res.body.code).to.equal(resp.ok.code);
-            expect(env.backend.calledOnce).to.be.true;
-            expect(env.backend.firstCall.firstArg).to.equal(1);
-            expect(env.backend.firstCall.lastArg).to.deep.equal(requestData);
-            done();
+    it('should error if empty', function() {
+        expect(ledger.checkAddItemRequestParams({})).to.not.be.undefined;
+    })
+    describe('if time is invalid', function() {
+        it('should error when it too big', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, time: Date.now()})).to.not.be.undefined;
         })
-        .catch(done);
+        it('should error when it to small', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, time: -1})).to.not.be.undefined;
+        })
+        it('not accept 0 value', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, time: 0})).to.not.be.undefined;
+        })
+        it('must be a number', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, time: 'not number'})).to.not.be.undefined;
+        })
+    })
+    describe('input must be 1 or 2', function() {
+        it('exceed range', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, input: 2})).to.not.be.undefined;
+        })
+        it('less then range', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, input: -1})).to.not.be.undefined;
+        })
+        it('must be a number', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, input: 'not number'})).to.not.be.undefined;
+        })
+        it('float not accept', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, input: 1.1})).to.not.be.undefined;
+        })
+    })
+    describe('type must valid', function() {
+        it('must be string', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, type: 123})).to.not.be.undefined;
+        })
+        it('must match regexp', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, type: 'this is too big'})).to.not.be.undefined;
+        })
+        it('not accept 0 len string', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, type: ''})).to.not.be.undefined;
+        })
+    })
+    describe('amount can be float', function() {
+        it('0 not accept', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, amount: 0})).to.not.be.undefined;
+        })
+        it('must be number', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, amount: 'abc'})).to.not.be.undefined;
+        })
+        it('should be positive', function() {
+            expect(ledger.checkAddItemRequestParams({...validParams, amount: -1.0})).to.not.be.undefined;
+        })
     })
 })
 
-describe('test get ledger item by month', function() {
-    const fakeUser = {id: 1, name: 'admin'}
-    const serverMaker = new TestServerMaker(fakeUser);
-    const apiPath = '/ledger/item/month/:month';
-    const testData = {name: 'abc'};
-
-    after(() => { serverMaker.closeAll(); })
-
-    const prepareRouter = () => {
-        const backend = sinon.fake.resolves(testData);
-        const router = new koaRouter();
-        router.get(apiPath, ledger.getItemsInMonth(backend));
-
-        return {backendStub: backend, router: router};
+describe('test addItem api', function() {
+    const validParams = {
+        'time': Math.trunc(Date.now() / 1000),
+        'input': 0,
+        'type': 'abcde09876',
+        'amount': 100,
     }
-
-    it('should not match url', function(done) {
-        const testEnv = prepareRouter();
-        
-        request(serverMaker.new(testEnv.router.routes()))
-        .get('/ledger/item/month')
-        .expect(404, done);
-    })
-
-    it('should check url params', function(done) {
-        const env = prepareRouter();
-        request(serverMaker.new(env.router.routes()))
-        .get('/ledger/item/month/abc')
-        .then(res => {
-            expect(res.body.code).to.equal(resp.invalidParams.code);
-            done();
-        })
-        .catch(done);
-    })
-
-    it('if ok, should call backend to get item', function(done) {
-        const env = prepareRouter();
-        request(serverMaker.new(env.router.routes()))
-        .get('/ledger/item/month/3')
-        .then(res => {
-            expect(res.body.code).to.equal(resp.ok.code);
-            expect(res.body.data).to.deep.equal(testData);
-            expect(env.backendStub.calledOnce).to.be.true;
-            expect(env.backendStub.firstCall.firstArg).to.equal(fakeUser.id);
-            expect(env.backendStub.firstCall.lastArg).to.equal(3);
-            done();
-        })
-        .catch(done);
-    })
-})
-
-describe('test category accesss', function() {
-    const fakeUser = {id: 1, name: 'admin'}
-    const envMaker = new TestServerMaker(fakeUser);
-    const testPath = '/api/category';
-
-    after(function() {
-        envMaker.closeAll();
-    })
 
     beforeEach(function() {
-        const router = new koaRouter();
-        const backend = sinon.fake();
-        this.backend = backend;
-        router.post(testPath, ledger.addCatagory(backend));
-        this.server = envMaker.new(router.routes());
+        this.ctx = {
+            logger: logger.getLogger(),
+            user: {
+                id: 1,
+                name: 'admin',
+            },
+            request: {
+                body: {}
+            },
+            body: undefined,
+        }
     })
-    
-    const sendRequest = (server, body) => {
-        return request(server).post(testPath).send(body);
-    }
 
-    describe('should check input params', function() {
-       
-        describe('should check type value', function() {
-            it('should have value', function(done) {
-                sendRequest(this.server, {'name': 'abcdefg'}).then(res => {
-                    expect(res.body.code).to.equal(resp.invalidParams.code);
-                    done();
-                })
-                .catch(done)
-            })
-            it('should falied value excceed', function(done) {
-                sendRequest(this.server, {name: 'abcd', type: 1000}).then(res => {
-                    expect(res.body.code).to.equal(resp.invalidParams.code);
-                    done();
-                })
-                .catch(done);
-            })
-            it('should ok', function(done) {
-                sendRequest(this.server, {name: "abc", type: 1}).then(res => {
-                    expect(res.body.code).to.equal(resp.ok.code);
-                    done();
-                })
-                .catch(done);
-            })
-        })
-
-        describe('should check name', function() {
-            it('should have name', function(done) {
-                sendRequest(this.server, {type: 0}).then(res => {
-                    expect(res.body.code).to.equal(resp.invalidParams.code);
-                    done();
-                })
-                .catch(done);
-            })
-            it('should ok', function(done) {
-                sendRequest(this.server, {type: 0, name: 'aaaa'}).then(res => {
-                    expect(res.body.code).to.equal(resp.ok.code);
-                    done();
-                })
-                .catch(done);
-            })
-        })
+    it('should deny access when params invalid', async function() {
+        this.ctx.request.body = {};
+        const api = ledger.addItem(sinon.fake.resolves());
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal(resp.invalidParams);
     })
-    describe('should write to backend if ok', function() {
-        it('should call only once and have right params', function(done) {
-            const fakeCategory = {type: 0, name: 'abc'}
-            sendRequest(this.server, fakeCategory).then(res => {
-                expect(this.backend.calledOnce).to.be.true;
-                expect(this.backend.firstCall.firstArg).to.equal(fakeUser.id);
-                expect(this.backend.firstCall.lastArg).to.deep.equal(fakeCategory);
-                expect(res.body.code).to.equal(resp.ok.code);
-                done();
-            })
-            .catch(done);
+    describe('if has valid params', function() {
+        beforeEach(() => {
+            this.ctx.ctx.request.body = validParams;
+        })
+        it('should ok if params valid', async function() {
+            const api = ledger.addItem(sinon.fake.resolves());
+            await api(this.ctx);
+            expect(this.ctx.body).to.deep.equal(resp.ok);
+        })
+        it('should call backend only once', async function() {
+            const fakeBackend = sinon.fake.resolves();
+            const api = ledger.addItem(fakeBackend);
+            await api(this.ctx);
+            expect(fakeBackend.calledOnce).to.be.true;
+        })
+        it('should call backend with user id', async function() {
+            const fakeBackend = sinon.fake.resolves();
+            const api = ledger.addItem(fakeBackend);
+            await api(this.ctx);
+            expect(fakeBackend.lastCall.firstArg).to.equal(1);
+        })
+        it('should call backend with params', async function() {
+            const fakeBackend = sinon.fake.resolves();
+            const api = ledger.addItem(fakeBackend);
+            await api(this.ctx);
+            expect(fakeBackend.lastCall.lastArg).to.deep.equal(validParams);
         })
     })
 })
