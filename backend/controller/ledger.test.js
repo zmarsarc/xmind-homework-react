@@ -321,3 +321,79 @@ describe('test getItemsInMonth api', function() {
         expect(this.ctx.body).to.deep.equal(expectResp);
     })
 })
+
+describe('add category params check', function() {
+    const validParams = {
+        name: 'category',
+        type: 0,
+    }
+    const testFunc = ledger.checkAddCategoryParams;
+
+    it('should pass if valid', function() {
+        expect(testFunc(validParams)).to.be.undefined;
+    })
+    it('must have name', function() {
+        expect(testFunc({...validParams, name: undefined})).not.be.undefined;
+    })
+    it('must have type', function() {
+        expect(testFunc({...validParams, type: undefined})).not.be.undefined;
+    })
+    it('type should be 0 or 1', function() {
+        expect(testFunc({...validParams, type: -1})).not.be.undefined;
+        expect(testFunc({...validParams, type: 2})).not.be.undefined;
+    })
+    it('accept valid type', function() {
+        expect(testFunc({...validParams, type: 0})).to.be.undefined;
+        expect(testFunc({...validParams, type: 1})).to.be.undefined;
+    })
+})
+
+describe('test addCategory api', function() {
+    beforeEach(function() {
+        this.ctx = {
+            logger: logger.getLogger(),
+            user: {
+                id: 1,
+                name: 'admin',
+            },
+            request: {
+                body: {
+                    name: 'category',
+                    type: 0,
+                }
+            }
+        }
+    })
+
+    it('should deny if params invalid', async function() {
+        this.ctx.request.body = {};
+        const api = ledger.addCatagory(sinon.fake.resolves());
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal(resp.invalidParams);
+    })
+    describe('if call backend', function() {
+        it('must call once', async function() {
+            const backend = sinon.fake.resolves();
+            const api = ledger.addCatagory(backend);
+            await api(this.ctx);
+            expect(backend.calledOnce).to.be.true;
+        }),
+        it('must specify user id', async function() {
+            const backend = sinon.fake.resolves();
+            const api = ledger.addCatagory(backend);
+            await api(this.ctx);
+            expect(backend.lastCall.firstArg).to.equal(this.ctx.user.id);
+        })
+        it('must hava params', async function() {
+            const backend = sinon.fake.resolves();
+            const api = ledger.addCatagory(backend);
+            await api(this.ctx);
+            expect(backend.lastCall.lastArg).to.deep.equal(this.ctx.request.body);
+        })
+    })
+    it('should return id if success', async function() {
+        const api = ledger.addCatagory(sinon.fake.resolves(1));
+        await api(this.ctx);
+        expect(this.ctx.body).to.deep.equal({...resp.ok, data: {id: 1}});
+    })
+})

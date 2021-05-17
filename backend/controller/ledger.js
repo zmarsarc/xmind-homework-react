@@ -116,39 +116,52 @@ const getItemsInMonth = (readItem) => {
     }
 }
 
+// addCategory参数约束
+const addCategoryRequestParamsSchema = joi.object({
+    name: joi.string().required(),
+    type: joi.number().integer().min(0).max(1).required(),
+})
+
+// 检查addCategory接口的参数
+const checkAddCategoryParams = json => {
+    const {error} = addCategoryRequestParamsSchema.validate(json);
+    return error;
+}
+
+// 添加账目类目，传入参数saveCategory是一个具有 async function(number, json{"type": , "name":}) 签名的方法
+// saveCategory作为将类目数据写入持久化存储的代理
+//
+// router: POST /api/category
+// body: json {"type": [int], "name": [string]}
+//      type: 类型，出账或是入账，可选值[0,1]
+//      name: 名称，有 unique(userid, type, name) 的限制
+// response: json {"code": 0, "msg": "ok", "data"; {"id": "abcdef1234"}}
+//      返回最新创建的category的id给前端
+const addCatagory = saveCategory => {
+    return async ctx => {
+        const error = checkAddCategoryParams(ctx.request.body);
+        if (error) {
+            ctx.logger.error(`invalid params, ${error}`);
+            ctx.body = resp.invalidParams;
+            return;
+        }
+
+        const id = await saveCategory(ctx.user.id, ctx.request.body);
+        ctx.logger.debug(`user ${ctx.user.name} add new category ${ctx.request.body.name}, id ${id}`);
+        ctx.body = resp.json({id: id});
+        return;
+    }
+};
+
 module.exports = {
     checkAddItemRequestParams,
     addItem,
     checkGetItemsInMonthRequestParams,
     checkGetItemsInMonthRequestQuery,
     getItemsInMonth,
+    checkAddCategoryParams,
+    addCatagory,
     
-    // 添加账目类目，传入参数saveCategory是一个具有 async function(number, json{"type": , "name":}) 签名的方法
-    // saveCategory作为将类目数据写入持久化存储的代理
-    //
-    // router: POST /api/category
-    // body: json {"type": [int], "name": [string]}
-    //      type: 类型，出账或是入账，可选值[0,1]
-    //      name: 名称，有 unique(userid, type, name) 的限制
-    // response: json {"code": 0, "msg": "ok", "data"; {"id": "abcdef1234"}}
-    //      返回最新创建的category的id给前端
-    addCatagory: (saveCategory) => {
-        return async (ctx, next) => {
-            ctx.checkBody('type').notEmpty().isInt().isIn([0, 1]);
-            ctx.checkBody('name').notEmpty();
-            if (ctx.errors) {
-                ctx.logger.error(`invalid params when add category to user ${ctx.user.name}`);
-                ctx.body = resp.invalidParams;
-                return await next();
-            }
-
-            const id = await saveCategory(ctx.user.id, ctx.request.body);
-            ctx.logger.debug(`user ${ctx.user.name} add new category ${ctx.request.body.name}, id ${id}`);
-            ctx.body = resp.json({id: id});
-            return await next();
-        }
-    },
-
     // 获取账目类目
     //
     // router: GET /api/category
