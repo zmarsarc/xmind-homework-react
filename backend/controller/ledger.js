@@ -153,6 +153,31 @@ const addCatagory = saveCategory => {
     }
 };
 
+// 获取账目类目
+//
+// router: GET /api/category
+// response: json {"code": 0, "msg": "ok", "data": []}
+const getCategory = readCategory => {
+    return async(ctx, next) => {
+        ctx.logger.debug(`user ${ctx.user.name} get category`);
+        ctx.body = resp.json(await readCategory(ctx.user.id));
+        return await next();
+    }
+};
+
+
+// 按类型获取账目类目
+//
+// router: GET /api/cagetory/type/:typeid
+// response: json {"code": 0, "msg": "ok", "data": [object]}
+const getCategoryByType = readCategory => {
+    return async(ctx, next) => {
+        ctx.logger.debug(`user ${ctx.user.name} get category with type ${ctx.params.typeid}`);
+        ctx.body = resp.json(await readCategory(ctx.user.id, ctx.params.typeid));
+        return await next();
+    }
+};
+
 module.exports = {
     checkAddItemRequestParams,
     addItem,
@@ -161,30 +186,8 @@ module.exports = {
     getItemsInMonth,
     checkAddCategoryParams,
     addCatagory,
-    
-    // 获取账目类目
-    //
-    // router: GET /api/category
-    // response: json {"code": 0, "msg": "ok", "data": []}
-    getCategory: (readCategory) => {
-        return async(ctx, next) => {
-            ctx.logger.debug(`user ${ctx.user.name} get category`);
-            ctx.body = resp.json(await readCategory(ctx.user.id));
-            return await next();
-        }
-    },
-
-    // 按类型获取账目类目
-    //
-    // router: GET /api/cagetory/type/:typeid
-    // response: json {"code": 0, "msg": "ok", "data": [object]}
-    getCategoryByType: (readCategory) => {
-        return async(ctx, next) => {
-            ctx.logger.debug(`user ${ctx.user.name} get category with type ${ctx.params.typeid}`);
-            ctx.body = resp.json(await readCategory(ctx.user.id, ctx.params.typeid));
-            return await next();
-        }
-    },
+    getCategory,
+    getCategoryByType,
 
     // router: GET /api/overview
     // router: GET /api/overview/month/:month
