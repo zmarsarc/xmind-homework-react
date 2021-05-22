@@ -165,7 +165,6 @@ const getCategory = readCategory => {
     }
 };
 
-
 // 按类型获取账目类目
 //
 // router: GET /api/cagetory/type/:typeid
@@ -178,6 +177,94 @@ const getCategoryByType = readCategory => {
     }
 };
 
+// router: GET /api/overview
+// router: GET /api/overview/month/:year/:month
+const getOverview = readLedger => {
+    return async(ctx, next) => {
+        let items = []
+        if (ctx.params) {
+            items = (await readLedger({userId: ctx.user.id, year: Number(ctx.params.year), month: Number(ctx.params.month)})).items;
+        } else {
+            items = (await readLedger({userId: ctx.user.id})).items;
+        }
+        let output = 0;
+        let input = 0;
+        for (let i of items) {
+            // output
+            if (i.type === 0) {
+                output += i.amount;
+            }
+
+            // input
+            if (i.type === 1) {
+                input += i.amount;
+            }
+        }
+
+        ctx.body = resp.json({outgoing: output, income: input});
+    }
+};
+
+// 获取月度列表
+// router: GET /api/month
+const getMonthList = reader => {
+    return async(ctx, next) => {
+        ctx.logger.debug(`${ctx.user.name} get month list`);
+        const {items} = await reader({userId: ctx.user.id});
+
+        for (let i in items) {
+            const date = new Date(items[i].eventTime * 1000);
+            items[i].yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        }
+
+        const month = {};
+        for (let i of items) {
+            if (!month[i.yearMonth]) {
+                month[i.yearMonth] = {date: i.yearMonth, income: 0, outgoing: 0}
+            }
+            if (i.type === 0) {
+                month[i.yearMonth].outgoing += i.amount;
+            }
+            if (i.type === 1) {
+                month[i.yearMonth].income += i.amount;
+            }
+        }
+
+        ctx.body = resp.json(Object.values(month).sort((i, j) => { return j.date.localeCompare(i.date); }));
+    }
+};
+
+// 导入账单文件
+// router: POST /api/ledger/file
+const importLedger = saver => {
+    return async(ctx, next) => {
+        ctx.logger.debug(`${ctx.user.name} import ledger file`);
+        if (!ctx.request.files) {
+            ctx.body = resp.invalidParams;
+            return await next();
+        }
+
+        const readProcesses = [];
+        for (let file of ctx.request.files.files) {
+            const parseProcess = new Promise((resolve, reject) => {
+                const parse = csv.parse({delimiter: ','}, (err, records) => {
+                    if (err) reject(err);
+                    resolve(records);
+                });
+                const rs = fs.createReadStream(file.path);
+                rs.pipe(parse);
+            })
+            readProcesses.push(parseProcess);
+        }
+        
+        const files = await Promise.all(readProcesses);
+        const bills = await handleUserBills(files);
+        await saver(ctx.user.id, bills);
+
+        ctx.body = resp.ok;
+    }
+}
+
 module.exports = {
     checkAddItemRequestParams,
     addItem,
@@ -188,92 +275,7 @@ module.exports = {
     addCatagory,
     getCategory,
     getCategoryByType,
-
-    // router: GET /api/overview
-    // router: GET /api/overview/month/:month
-    getOverview: (readLedger) => {
-        return async(ctx, next) => {
-            let items = []
-            if (ctx.params) {
-                items = (await readLedger({userId: ctx.user.id, year: ctx.params.year, month: ctx.params.month})).items;
-            } else {
-                items = (await readLedger({userId: ctx.user.id})).items;
-            }
-            let output = 0;
-            let input = 0;
-            for (let i of items) {
-                // output
-                if (i.type === 0) {
-                    output += i.amount;
-                }
-
-                // input
-                if (i.type === 1) {
-                    input += i.amount;
-                }
-            }
-
-            ctx.body = resp.json({outgoing: output, income: input});
-        }
-    },
-
-    // 获取月度列表
-    // router: GET /api/month
-    getMonthList: (reader) => {
-        return async(ctx, next) => {
-            ctx.logger.debug(`${ctx.user.name} get month list`);
-            const {items} = await reader({userId: ctx.user.id});
-
-            for (let i in items) {
-                const date = new Date(items[i].eventTime);
-                items[i].yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-            }
-
-            const month = {};
-            for (let i of items) {
-                if (!month[i.yearMonth]) {
-                    month[i.yearMonth] = {date: i.yearMonth, income: 0, outgoing: 0}
-                }
-                if (i.type === 0) {
-                    month[i.yearMonth].outgoing += i.amount;
-                }
-                if (i.type === 1) {
-                    month[i.yearMonth].income += i.amount;
-                }
-            }
-
-            ctx.body = resp.json(Object.values(month).sort((i, j) => { return j.date.localeCompare(i.date); }));
-        }
-    },
-
-    // 导入账单文件
-    // router: POST /api/ledger/file
-    importLedger: (saver) => {
-        return async(ctx, next) => {
-            ctx.logger.debug(`${ctx.user.name} import ledger file`);
-            if (!ctx.request.files) {
-                ctx.body = resp.invalidParams;
-                return await next();
-            }
-
-            const readProcesses = [];
-            for (let file of ctx.request.files.files) {
-                const parseProcess = new Promise((resolve, reject) => {
-                    const parse = csv.parse({delimiter: ','}, (err, records) => {
-                        if (err) reject(err);
-                        resolve(records);
-                    });
-                    const rs = fs.createReadStream(file.path);
-                    rs.pipe(parse);
-                })
-                readProcesses.push(parseProcess);
-            }
-            
-            const files = await Promise.all(readProcesses);
-            const bills = await handleUserBills(files);
-            await saver(ctx.user.id, bills);
-
-            ctx.body = resp.ok;
-        }
-    }
+    getOverview,
+    getMonthList,
+    importLedger,
 }

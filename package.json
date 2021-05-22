@@ -25,10 +25,9 @@
   },
   "scripts": {
     "serve": "node backend/server.js",
-    "test backend": "mocha './backend/**/*.test.js'",
+    "test": "mocha './backend/**/*.test.js'",
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

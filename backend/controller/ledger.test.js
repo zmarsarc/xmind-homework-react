@@ -3,6 +3,7 @@ const sinon = require('sinon');
 const expect = require('chai').expect;
 const resp = require('./response.js');
 const logger = require('log4js');
+const { number } = require('joi');
 
 describe('add item should check params', function() {
     const validParams = {
@@ -395,5 +396,144 @@ describe('test addCategory api', function() {
         const api = ledger.addCatagory(sinon.fake.resolves(1));
         await api(this.ctx);
         expect(this.ctx.body).to.deep.equal({...resp.ok, data: {id: 1}});
+    })
+})
+
+describe('test getOverview', function() {
+    beforeEach(function() {
+        this.ctx = {
+            user: {
+                id: 1, name: 'admin',
+            }
+        }
+    })
+
+    describe('should return the overview of all bills if no month specified', function() {
+        beforeEach(function() {
+            this.backend = sinon.fake.resolves({total: 0, items: []});
+            this.api = ledger.getOverview(this.backend);
+        });
+        it('should call backend only once', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.calledOnce).to.be.true;
+        })
+        it('should with user id', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.lastCall.args[0]).to.deep.equal({
+                userId: this.ctx.user.id,
+            })
+        })
+    })
+    describe('should return the overview of that bills in which month is specified', function() {
+        this.beforeEach(function() {
+            this.backend = sinon.fake.resolves({total: 0, items: []});
+            this.api = ledger.getOverview(this.backend);
+            this.ctx.params = {
+                year: '2021',
+                month: '5',
+            }
+        })
+        it('should call backend only once', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.calledOnce).to.be.true;
+        })
+        it('should have userid, year and month', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.lastCall.args[0]).to.deep.equal({
+                userId: this.ctx.user.id,
+                year: Number(this.ctx.params.year),
+                month: Number(this.ctx.params.month),
+            })
+        })
+    })
+    describe('should return count of bills', function() {
+        it('should count input', async function() {
+            const api = ledger.getOverview(sinon.fake.resolves({items: [{type: 1, amount: 1}]}));
+            await api(this.ctx);
+            expect(this.ctx.body.data).to.deep.equal({
+                outgoing: 0,
+                income: 1,
+            })
+        })
+        it('should count outgoing', async function() {
+            const api = ledger.getOverview(sinon.fake.resolves({items: [{type: 0, amount: 1}]}));
+            await api(this.ctx);
+            expect(this.ctx.body.data).to.deep.equal({
+                outgoing: 1,
+                income: 0,
+            })
+        })
+    })
+})
+
+describe('test getMonthList', function() {
+    beforeEach(function() {
+        this.ctx = {
+            logger: logger.getLogger(),
+            user: {id: 1, name: 'admin'},
+        }
+    })
+
+    describe('should call backend', function() {
+        beforeEach(function() {
+            this.backend = sinon.fake.resolves({items: []});
+            this.api = ledger.getMonthList(this.backend);
+        })
+        it('should call backend once', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.calledOnce).to.be.true;
+        })
+        it('should call backend with user id', async function() {
+            await this.api(this.ctx);
+            expect(this.backend.lastCall.args[0]).to.deep.equal({
+                userId: this.ctx.user.id,
+            })
+        })
+    })
+    describe('count amount', function() {
+        beforeEach(function() {
+            const now = Date.now();
+            const date = new Date(now);
+            this.expectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            this.fakeItems = {items: [{
+                eventTime: Math.trunc(now / 1000),
+                type: 1,
+                amount: 1,
+            }]}
+        })
+
+        it('should count income', async function() {
+            this.fakeItems.items[0].type = 1;
+            await (ledger.getMonthList(sinon.fake.resolves(this.fakeItems))(this.ctx));
+            expect(this.ctx.body.data).to.deep.equal([{
+                date: this.expectDate,
+                income: 1,
+                outgoing: 0
+            }])
+        })
+        it('should count outgoing', async function() {
+            this.fakeItems.items[0].type = 0;
+            await (ledger.getMonthList(sinon.fake.resolves(this.fakeItems))(this.ctx));
+            expect(this.ctx.body.data).to.deep.equal([{
+                date: this.expectDate,
+                income: 0,
+                outgoing: 1,
+            }])
+        })
+    })
+    it('return values must sorted', async function() {
+        const now = Date.now();
+        const fakeItems = [
+            {eventTime: 0, type: 0, amount: 0},
+            {eventTime: Math.trunc(now / 1000), type: 0, amount: 0},
+        ]
+        const date = new Date(now);
+        const expectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        await (ledger.getMonthList(sinon.fake.resolves({items: fakeItems}))(this.ctx));
+        expect(this.ctx.body.data).to.deep.equal([
+            {date: expectDate, income: 0, outgoing: 0},
+            {date: '1970-01', income: 0, outgoing: 0},
+        ])
     })
 })
