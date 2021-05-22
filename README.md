@@ -1,70 +1,65 @@
-# Getting Started with Create React App
+# 说明
+此代码完成了xmind的前端面试题 https://github.com/xmindltd/hiring/tree/master/frontend-1
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+前端采用react，后端koa + sqlite。
 
-## Available Scripts
+如果对你也有帮助，可以随意使用。
 
-In the project directory, you can run:
+<br/>
 
-### `npm start`
+# 如何安装此sample：
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+首先clone此仓库，然后进入对应的文件夹中，通过终端执行 npm run install 安装依赖。
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+使用 npm run test 可以运行单元测试，测试只覆盖了后端代码。
 
-### `npm test`
+你有两种方式可以启动此项目：
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<br/>
 
-### `npm run build`
+### 开发模式
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. npm run serve 启动后端服务，后端将会在3001端口打开服务
+2. npm start 启动前端，react的开发测试服务器将会在3000打开，浏览器会自动弹出并打开首页
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 生产模式
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. npm run build 打包前端资源
+2. npm run serve 启动服务，然后通过localhost:3001访问 
 
-### `npm run eject`
+<br/>
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+# 使用方法：
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+![工具栏截图](./docs/screenshot/toolbar.png)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+如箭头所指位置的按钮可以弹出工具条，里面提供两种添加账单的方式，按从左向右的顺序分别是：
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+1. 添加账目
+2. 导入账单
 
-## Learn More
+## 导入账单
+在仓库的docs中已经放置了题目所要求的两个账单文件，点击导入账单按钮将弹出文件选择器，同时选择这两个账单（注意一定要同时上传两个文件，否则会找不到账单类型），然后确定，稍等一下账单列表即自动刷新。
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+![如何导入账单](./docs/screenshot/importbills.png)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 添加账单
+点击添加账单按钮将弹出输入器，输入对应的信息点ok即可。
 
-### Code Splitting
+![如何添加账单](./docs/screenshot/addbill.png)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+注意，通过打开类型选择器可以添加新的类型
 
-### Analyzing the Bundle Size
+![如何添加新类型](./docs/screenshot/addcategory.png)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 筛选
 
-### Making a Progressive Web App
+按月筛选直接通过月份选择器即可
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+![按月筛选](./docs/screenshot/selectmonth.png)
 
-### Advanced Configuration
+<br/>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+月内筛选和排序，通过表头的功能按钮选择。
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+![月内筛选](./docs/screenshot/filter.png)
