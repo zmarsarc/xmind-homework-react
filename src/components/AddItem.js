@@ -211,7 +211,7 @@ const AddItem = props => {
             return;
         }
         const item = {
-            time: datetime,
+            time: Math.trunc(datetime / 1000),
             input: category.type,
             type: category.id,
             amount: amount

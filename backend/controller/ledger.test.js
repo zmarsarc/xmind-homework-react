@@ -492,11 +492,8 @@ describe('test getMonthList', function() {
     })
     describe('count amount', function() {
         beforeEach(function() {
-            const now = Date.now();
-            const date = new Date(now);
-            this.expectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             this.fakeItems = {items: [{
-                eventTime: Math.trunc(now / 1000),
+                eventTime: '2020-01',
                 type: 1,
                 amount: 1,
             }]}
@@ -506,7 +503,7 @@ describe('test getMonthList', function() {
             this.fakeItems.items[0].type = 1;
             await (ledger.getMonthList(sinon.fake.resolves(this.fakeItems))(this.ctx));
             expect(this.ctx.body.data).to.deep.equal([{
-                date: this.expectDate,
+                date:'2020-01',
                 income: 1,
                 outgoing: 0
             }])
@@ -515,25 +512,21 @@ describe('test getMonthList', function() {
             this.fakeItems.items[0].type = 0;
             await (ledger.getMonthList(sinon.fake.resolves(this.fakeItems))(this.ctx));
             expect(this.ctx.body.data).to.deep.equal([{
-                date: this.expectDate,
+                date: '2020-01',
                 income: 0,
                 outgoing: 1,
             }])
         })
     })
     it('return values must sorted', async function() {
-        const now = Date.now();
         const fakeItems = [
-            {eventTime: 0, type: 0, amount: 0},
-            {eventTime: Math.trunc(now / 1000), type: 0, amount: 0},
+            {eventTime: '1990-01-01 00:00:00', type: 0, amount: 0},
+            {eventTime: '2020-01-01 00:00:00', type: 0, amount: 0},
         ]
-        const date = new Date(now);
-        const expectDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
         await (ledger.getMonthList(sinon.fake.resolves({items: fakeItems}))(this.ctx));
         expect(this.ctx.body.data).to.deep.equal([
-            {date: expectDate, income: 0, outgoing: 0},
-            {date: '1970-01', income: 0, outgoing: 0},
+            {date: '2020-01', income: 0, outgoing: 0},
+            {date: '1990-01', income: 0, outgoing: 0},
         ])
     })
 })

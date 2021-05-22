@@ -77,7 +77,7 @@ const addItem = saveItem => {
     return async ctx => {
         const error = checkAddItemRequestParams(ctx.request.body);
         if (error) {
-            ctx.logger.error(`invalid params: ${error}`);
+            ctx.logger.error(`add items invalid params: ${error}`);
             ctx.body = resp.invalidParams;
             return;
         }
@@ -96,13 +96,13 @@ const getItemsInMonth = (readItem) => {
     return async ctx => {
         const [year, month, err] = checkGetItemsInMonthRequestParams(ctx.params.year, ctx.params.month);
         if (err) {
-            ctx.logger.error(`invalid url params, ${err}`);
+            ctx.logger.error(`get items in month invalid url params, ${err}`);
             ctx.body = resp.invalidParams;
             return;
         }
         const {value, error} = checkGetItemsInMonthRequestQuery(ctx.query);
         if (error) {
-            ctx.logger.error(`invalid query params, ${error}`);
+            ctx.logger.error(`get items in month invalid query params, ${error}`);
             ctx.body = resp.invalidParams;
             return;
         }
@@ -141,7 +141,7 @@ const addCatagory = saveCategory => {
     return async ctx => {
         const error = checkAddCategoryParams(ctx.request.body);
         if (error) {
-            ctx.logger.error(`invalid params, ${error}`);
+            ctx.logger.error(`add category invalid params, ${error}`);
             ctx.body = resp.invalidParams;
             return;
         }
@@ -213,7 +213,7 @@ const getMonthList = reader => {
         const {items} = await reader({userId: ctx.user.id});
 
         for (let i in items) {
-            const date = new Date(items[i].eventTime * 1000);
+            const date = new Date(items[i].eventTime);
             items[i].yearMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         }
 
