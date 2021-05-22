@@ -204,12 +204,20 @@ const AddItem = props => {
     const [category, setCategory] = useState(null);
     const [amount, setAmount] = useState(0);
     const [ok, setOk] = useState(false);
+    const [categoryRequire, setCategoryRequire] = useState(false);
     const [,,notifyItemsUpdate] = useBillUpdate();
 
     useEffect(() => {
         if (!ok) {
             return;
         }
+        if (category === null) {
+            setCategoryRequire(true);
+            setOk(false);
+            return;
+        }
+        setCategoryRequire(false);
+
         const item = {
             time: Math.trunc(datetime / 1000),
             input: category.type,
@@ -223,7 +231,7 @@ const AddItem = props => {
         <div className={addItemStyle}>
             <div className="content">
                 <DatetimePicker onChange={setDatetime} />
-                <CategoryPicker onChange={setCategory} />
+                <CategoryPicker requireHint={categoryRequire} onChange={setCategory} />
                 <input type="number" placeholder='金额' onChange={e => setAmount(Number(e.target.value))}/>
                 <button className="cancel" onClick={props.onClose}>cancel</button>
                 <button className="confirm" onClick={() => setOk(true)}>ok</button>

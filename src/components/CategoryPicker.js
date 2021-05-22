@@ -20,6 +20,11 @@ const selectedCategory = css`
     padding: 5px;
 `;
 
+const selectedCategoryReqiured = css`
+    ${selectedCategory}
+    box-shadow: 1px 1px 15px rgba(255, 0, 0, 0.5);
+`;
+
 const selectedType = css`
     background-color: red;
 `;
@@ -163,7 +168,7 @@ const CategoryPicker = props => {
     return (
         <div className={categoryPickerStyle}>
             <Context.Provider value={dispatch}>
-                <div className={selectedCategory} onClick={() => dispatch(actions.toggles(!state.isOpen))}>
+                <div className={props.requireHint ? selectedCategoryReqiured : selectedCategory} onClick={() => dispatch(actions.toggles(!state.isOpen))}>
                     {state.selectedCategory === null ? '选择类型' : state.selectedCategory.name}
                 </div>
                 <div className={state.isOpen? activePicker : disactivePicker}>
