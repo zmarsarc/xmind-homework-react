@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useRef, useState } from 'react';
 import AddItem from './AddItem.js';
 import ledger from '../api/ledger.js';
+import useBillUpdate from '../hooks/useBillUpdate.js';
 
 const toolbarStyle = css`
     position: fixed;
@@ -47,22 +48,23 @@ const toolbarStyle = css`
     }
 `;
 
-const uploadFile = files => {
-    if (files.length === 0) {
-        return;
-    }
-    const data = new FormData();
-    for (let f of files) {
-        data.append('files', f);
-    }
-    ledger.uploadLedgerFile(data).catch(err => alert(err));
-}
-
 export const Toolbar = props => {
     const [menuActive, setMenuActive] = useState(false);
     const [addItemOpen, setAddItemOpen] = useState(false);
     const inputRef = useRef(null);
+    const [,,notify] = useBillUpdate();
 
+    const uploadFile = files => {
+        if (files.length === 0) {
+            return;
+        }
+        const data = new FormData();
+        for (let f of files) {
+            data.append('files', f);
+        }
+        ledger.uploadLedgerFile(data).then(notify).catch(err => alert(err));
+    }
+    
     return (
         <>
             <div className={toolbarStyle}>
